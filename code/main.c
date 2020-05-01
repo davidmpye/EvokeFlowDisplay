@@ -32,7 +32,6 @@
 
 #define USB_DEBUG
 
-//#define SIDEFLIP
 //#define VERTFLIP
 
 //Our framebuffer
@@ -123,12 +122,11 @@ void spi1_isr() {
 	else handleDataByte(byte);
 }
 
-void setDisplayOff() {
-	send(true, 0xAE);
-}
-
-void setDisplayOn() {
-	send(true, 0xAF);
+void enableDisplay(bool state) {
+	if (state) {
+		send(true, 0xAF);
+	}
+	else send(true, 0xAE);
 }
 
 void setBrightness(unsigned int level) {
@@ -154,10 +152,10 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 
 	if (len == 1) {
 		if (bytes[0] == 0xAF) {
-  			setDisplayOn();
+  			enableDisplay(true);
 		}
 		else if (bytes[0] == 0xAE) {
-			setDisplayOff();
+			enableDisplay(false);
 		}
 		else if ( (bytes[0] & 0xF0) == 0xB0) {
 			//page cmd
@@ -413,15 +411,12 @@ uint8_t ssd1305init [] = {
 	0x8e,   //Mandatory (but unspecified) argument to 0xAD!
 	0xd8,	//Area colour mode
 	0x05,   //monochrome, low power display mode
-#ifdef SIDEFLIP
+#ifdef VERTFLIP 
 	0xa1,
-#else
-	0xa0,
-#endif
-#ifdef VERTFLIP
 	0xc8,
 #else
-	0xc0, 	//c0 is one way up, c8 is the other!
+	0xa0,
+	0xc0,
 #endif
 	0xda, 	//Hardware com pin configuration
 	0x12, 	//'alternative' com pin config, no left to right remap.
@@ -486,7 +481,7 @@ void initOLED() {
     //Zero the framebuffer, send it, then turn the display on to avoid random noise appearing 
     memset(framebuffer, 0x00, 128*8);	
     sendFrameBufferToOLED();
-    setDisplayOn();
+    enableDisplay(true);
 }
 
 void init() {
