@@ -1,0 +1,3 @@
+note I applied a 270 degree rotation to the STM32 by hand.
+
+Noted also that there were two rotations for the polarised capacitors that were flipped 180' by jlc.

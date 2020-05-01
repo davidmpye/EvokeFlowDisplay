@@ -1,0 +1,10 @@
+Comment,Designator,Footprint,LCSC, LCSC
+"10uF","C1,C2","Capacitor_Tantalum_SMD:CP_EIA-3216-18_Kemet-A",""," C7171"
+"C","C3,C4","Capacitor_SMD:C_0805_2012Metric","","C49678"
+"100nF","C9,C5,C6,C7,C8,C10","Capacitor_SMD:C_0805_2012Metric","","C49678"
+"CN101","INPUT_CONN1","Connector_FFC-FPC:Molex_200528-0080_1x08-1MP_P1.00mm_Horizontal",""
+"Conn_01x30","LCD_CONN1","Connector_FFC-FPC:Hirose_FH12-30S-0.5SH_1x30-1MP_P0.50mm_Horizontal",""
+"10K","R1,R3","Resistor_SMD:R_0805_2012Metric",""," C17414"
+"1.5M","R2","Resistor_SMD:R_0805_2012Metric","","C26110"
+"Conn_01x05","ST_LINK1","Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",""
+"STM32F103C8Tx","U1","Package_QFP:LQFP-48_7x7mm_P0.5mm","","C8734"
