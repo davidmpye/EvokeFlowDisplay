@@ -100,7 +100,7 @@ void SSD1305_sendByte(bool cmd, uint8_t b) {
 		//Wait for transfer to start
 	}
 
-	while ((SPI_SR(SPI2) & SPI_SR_BSY)); {
+	while ((SPI_SR(SPI2) & SPI_SR_BSY)) {
 		//Wait fof transfer to finish
 	}
 	//CS_high - end of byte
@@ -170,7 +170,7 @@ void SSD1305_enableDisplay(bool state) {
 	}
 }
 
-void SSD1305_sendPage(uint8_t page, uint8_t *fb) {
+void SSD1305_sendPage(uint8_t page, volatile uint8_t *fb) {
 	SSD1305_sendByte(true, 0xB0 + page); //set page
 	SSD1305_sendByte(true, 0x00); //set column offset lower  - 0 
 	SSD1305_sendByte(true, 0x10); //set column offset higher - 0 
@@ -180,7 +180,7 @@ void SSD1305_sendPage(uint8_t page, uint8_t *fb) {
 	}
 } 
 
-void SSD1305_sendFB(uint8_t *fb) {
+void SSD1305_sendFB(volatile uint8_t *fb) {
     for (int i=0; i<8; ++i) 
         SSD1305_sendPage(i, fb);
 } 

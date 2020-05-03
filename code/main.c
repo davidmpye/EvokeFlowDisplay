@@ -26,16 +26,12 @@
 #include "libopencm3/stm32/exti.h"
 #include "ssd1305.h"
 #include "pins.h"
+
 //Note VCC supplied by radio is 14.55volts.
 //1.15MOhm therefore should be the IREF current resistor
-//The radio seems to use 1.5MOHm tho... :-O
-
-//VCC 14.55volts
-#define BUFSIZE 10  //room for 8 data or command blocks
-#define DATA_SIZE 200//room for 128 bytes per block (probably excessive, no need to be longer than page size
+//The radio seems to use 1.5MOHm tho... 
 
 #define USB_DEBUG
-
 //#define VERTFLIP
 
 //Our framebuffer
@@ -47,10 +43,13 @@ volatile bool fb_updated = false;
 
 uint8_t brightness = 0; //Display brightness = 0->10
 
-//Cmd buffer for dumping to USB for debug purposes
+#ifdef USB_DEBUG
+
+//Cmd buffer for dumping to USB for debug purposes	
 #define DEBUG_BUFFER_LEN 64
 uint8_t cmdbuffer[DEBUG_BUFFER_LEN];
 int cmdsrx =0;
+#endif
 
 //used to store what the command interpreter state is
 typedef enum  CMD_STATE {
@@ -59,7 +58,24 @@ typedef enum  CMD_STATE {
         CMD_MULTIBYTE_IN_PROGRESS
 } CMD_STATE ;
 
-static void usart_setup() {
+
+//Function prototypes
+
+static void initUSART(void);
+static void initSPI(void);
+
+void handleCommand(uint8_t *bytes, uint8_t len);
+void handleCmdByte(uint8_t byte);
+void handleDataByte(uint8_t byte);
+void init(void);
+int main(void);
+
+#ifdef USB_DEBUG
+void uart_puts(char *);
+char *toHex(uint8_t);
+#endif
+
+static void initUSART() {
     rcc_periph_clock_enable(RCC_USART1);	
 	// Just set up TX for now, RX pin will require more work!
 	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART1_TX);
@@ -73,7 +89,7 @@ static void usart_setup() {
 	usart_enable(USART1);
 }
 
-static void spi_setup() {
+static void initSPI() {
     rcc_periph_clock_enable(RCC_SPI1);	
 	//NSS = PA4, SCK = PA5, MISO = PA6, MOSI=PA7
 	gpio_set_mode( GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO4 | GPIO7 | GPIO5 | GPIO6 ); //SPI_NSS
@@ -220,6 +236,7 @@ void spi1_isr() {
 
 
 
+#ifdef USB_DEBUG
 //NB not thread safe...
 char hexbuf[3]; //AA<NULL>
 char *toHex(uint8_t buf) {
@@ -229,6 +246,7 @@ char *toHex(uint8_t buf) {
     hexbuf[2] = 0x00;
     return hexbuf;
 }
+#endif
 
 void handleCommand(uint8_t *bytes, uint8_t len) {
 	static uint8_t page, col; //used to calculate/store framebuffer offset
@@ -311,7 +329,7 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 					break;
 			}
 		}
-		else if (bytes[0] = 0xDB) {
+		else if (bytes[0] == 0xDB) {
 			//We need to store this value to work out what the brightness is as levels 1 and 0 both have the 
 			//same 0x81 value
 			DBval = bytes[1];
@@ -343,6 +361,14 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 
 
 void handleCmdByte(uint8_t byte) {
+	//A command byte has arrived.
+	//The interpreter has to be stateful, as some commands are multibyte
+	//(in fact, the scroll commands are up to 5), so we need to keep track
+	//of our state, and interpret the command as a whole once it's arrived.
+	//Actually, we only handle up to 2-byte commands (the brightness ones!)
+	//and the others seem to be either completely unused (or just part of the
+	//initial power-on init string, and not something we need to understand.
+
 	static  CMD_STATE cmdState = CMD_AWAITING;
      //Default to expecting a 1 byte command
 	static  uint8_t bytesExpected = 1;
@@ -441,11 +467,11 @@ void init() {
     rcc_periph_clock_enable(RCC_GPIOB);
 
 #ifdef USB_DEBUG
-    usart_setup();
+    initUSART();
     uart_puts("HELLO \r\n");
 #endif
 
-    spi_setup();
+    initSPI();
 	//dma_setup();
 
    	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,  GPIO11);
@@ -463,8 +489,10 @@ int main() {
 	init();
 
 	//DATA *from* the radio is received via SPI1 interrupt handler, and inserted into the framebuffer
+	//or a command (eg brightness) is interpreted, translated and directly sent out from within the receive
+	//interrupt handler call stack.
 
-
+	//DMA - currently not yet used
 	//This kicks off the dma transfers, which will now self propagate for ever.
 	//sendPageToOled(0);
 
