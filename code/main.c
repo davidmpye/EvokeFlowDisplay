@@ -2,31 +2,16 @@
 #include "libopencm3/stm32/gpio.h"
 #include "libopencm3/stm32/usart.h"
 #include "libopencm3/stm32/spi.h"
+#include <libopencm3/stm32/dma.h>
 #include "libopencm3/cm3/nvic.h"
 #include "libopencm3/stm32/exti.h"
-
+#include "ssd1305.h"
+#include "pins.h"
 //Note VCC supplied by radio is 14.55volts.
 //1.15MOhm therefore should be the IREF current resistor
 //The radio seems to use 1.5MOHm tho... :-O
 
 //VCC 14.55volts
-
-// Pin defines
-//GPIOB
-//For the OLED/LCD *OUTPUT* device 
-
-//SPI pins for note.
-//IN spi peripheral (SPI1)
-//NSS = PA4, SCK = PA5, MISO = PA6, MOSI=PA7
-//OUT spi pins
-//NSS = B12(not used), SCK = B13, MISO = B14(not used), MOSI = B15
-
-//GPIOB pins for o/p
-#define OUT_GPIO GPIOB
-#define OUT_D_C_PIN GPIO10
-#define OUT_RST_PIN GPIO11
-#define OUT_CS_PIN GPIO12
-
 #define BUFSIZE 10  //room for 8 data or command blocks
 #define DATA_SIZE 200//room for 128 bytes per block (probably excessive, no need to be longer than page size
 
@@ -40,12 +25,14 @@ volatile uint8_t framebuffer[128*8];
 volatile unsigned int fb_offset = 0;
 //Whether the fb has changed
 volatile bool fb_updated = false;
+
 uint8_t brightness = 0; //Display brightness = 0->10
 
 //Cmd buffer for dumping to USB for debug purposes
 #define DEBUG_BUFFER_LEN 64
 uint8_t cmdbuffer[DEBUG_BUFFER_LEN];
 int cmdsrx =0;
+
 //used to store what the command interpreter state is
 typedef enum  CMD_STATE {
         CMD_AWAITING,
@@ -54,8 +41,7 @@ typedef enum  CMD_STATE {
 } CMD_STATE ;
 
 static void usart_setup() {
-	/* Setup UART parameters. */
-    	rcc_periph_clock_enable(RCC_USART1);	
+    rcc_periph_clock_enable(RCC_USART1);	
 	// Just set up TX for now, RX pin will require more work!
 	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART1_TX);
 	usart_set_baudrate(USART1, 115200);
@@ -69,7 +55,7 @@ static void usart_setup() {
 }
 
 static void spi_setup() {
-    	rcc_periph_clock_enable(RCC_SPI1);	
+    rcc_periph_clock_enable(RCC_SPI1);	
 	//NSS = PA4, SCK = PA5, MISO = PA6, MOSI=PA7
 	gpio_set_mode( GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO4 | GPIO7 | GPIO5 | GPIO6 ); //SPI_NSS
 	spi_reset(SPI1);
@@ -81,7 +67,7 @@ static void spi_setup() {
         	SPI_CR1_CPHA_CLK_TRANSITION_2,
 			SPI_CR1_DFF_8BIT,
         	SPI_CR1_MSBFIRST
-    	);
+    );
 
 	//rx interrupt on
 	nvic_enable_irq(NVIC_SPI1_IRQ);
@@ -101,7 +87,7 @@ static void spi_setup() {
         	SPI_CR1_BAUDRATE_FPCLK_DIV_256,
         	SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE,
         	SPI_CR1_CPHA_CLK_TRANSITION_1,
-		SPI_CR1_DFF_8BIT,
+			SPI_CR1_DFF_8BIT,
         	SPI_CR1_MSBFIRST
 		);
 	
@@ -110,6 +96,98 @@ static void spi_setup() {
 	
 	spi_enable(SPI2);
 }
+
+/*
+void dma_setup() {
+    // Enable DMA clock
+    rcc_periph_clock_enable(RCC_DMA1);
+    // In order to use SPI2_TX, we need DMA 1 Channel 5
+    dma_channel_reset(DMA1, DMA_CHANNEL5);
+    // SPI2 data register as output
+    dma_set_peripheral_address(DMA1, DMA_CHANNEL5, (uint32_t)&SPI2_DR);
+    // We will be using system memory as the source data
+    dma_set_read_from_memory(DMA1, DMA_CHANNEL5);
+    // Memory increment mode needs to be turned on, so that if we're sending
+    // multiple bytes the DMA controller actually sends a series of bytes,
+    // instead of the same byte multiple times.
+    dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL5);
+    // Contrarily, the peripheral does not need to be incremented - the SPI
+    // data register doesn't move around as we write to it.
+    dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL5);
+    // We want to use 8 bit transfers
+    dma_set_peripheral_size(DMA1, DMA_CHANNEL5, DMA_CCR_PSIZE_8BIT);
+    dma_set_memory_size(DMA1, DMA_CHANNEL5, DMA_CCR_MSIZE_8BIT);
+    // We don't have any other DMA transfers going, but if we did we can use
+    // priorities to try to ensure time-critical transfers are not interrupted
+    // by others. In this case, it is alone.
+    dma_set_priority(DMA1, DMA_CHANNEL5, DMA_CCR_PL_LOW);
+    // Since we need to pull the register clock high after the transfer is
+    // complete, enable transfer complete interrupts.
+    dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL5);
+    // We also need to enable the relevant interrupt in the interrupt
+    // controller, and assign it a priority.
+    nvic_set_priority(NVIC_DMA1_CHANNEL5_IRQ, 0);
+    nvic_enable_irq(NVIC_DMA1_CHANNEL5_IRQ);
+}
+
+
+void sendPageToOled(uint8_t page) {
+	//set starting offset of transfer
+  	dma_set_memory_address(DMA1, DMA_CHANNEL5, (uint32_t)&framebuffer[128*page]);
+	//128 bytes for this row of the framebuffer
+    dma_set_number_of_data(DMA1, DMA_CHANNEL5, 128);
+	//dma on
+    dma_enable_channel(DMA1, DMA_CHANNEL5);
+	
+	//Send commands to specify page
+	send(true, 0xB0 + page); //set page
+	send(true, 0x00); //set column offset lower  - 0 
+	send(true, 0x10); //set column offset higher - 0 
+
+	//Manually pull CS low again
+	gpio_clear(GPIOB, OUT_CS_PIN);
+
+	//Manually pull D/C pin high to signify data
+	gpio_set(GPIOB, GPIO10);
+
+	//start DMA send of the data.
+	spi_enable_tx_dma(SPI2);
+}
+
+
+void dma1_channel4_5_isr() {
+
+	static uint8_t lastPageSent = 0;
+
+    // Check that we got triggered because the transfer is complete, by
+    // checking the Transfer Complete Interrupt Flag
+    if (dma_get_interrupt_flag(DMA1, DMA_CHANNEL5, DMA_TCIF)) {
+		//reset flag register.
+        dma_clear_interrupt_flags(DMA1, DMA_CHANNEL5, DMA_TCIF);
+		//wait until transfer complete
+        while (SPI_SR(SPI2) & SPI_SR_BSY) {
+			//wait.
+		}
+
+
+        // Turn our DMA channel back off, in preparation of the next transfer
+        spi_disable_tx_dma(SPI2);
+        dma_disable_channel(DMA1, DMA_CHANNEL5);
+
+		//CS to high, transfer finished.
+		gpio_set(GPIOB, OUT_CS_PIN);
+
+
+		if (lastPageSent == 7) 
+			lastPageSent = 0;
+		else lastPageSent++;
+
+		//This will send the next page via DMA
+		sendPageToOled(lastPageSent);
+
+    }
+}
+*/
 
 void spi1_isr() {
 	//Hopefully this has gone off because a byte has arrived..
@@ -122,17 +200,7 @@ void spi1_isr() {
 	else handleDataByte(byte);
 }
 
-void enableDisplay(bool state) {
-	if (state) {
-		send(true, 0xAF);
-	}
-	else send(true, 0xAE);
-}
 
-void setBrightness(unsigned int level) {
-	send(true, 0x81);
-	send(true,0x05);
-}
 
 //NB not thread safe...
 char hexbuf[3]; //AA<NULL>
@@ -152,10 +220,10 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 
 	if (len == 1) {
 		if (bytes[0] == 0xAF) {
-  			enableDisplay(true);
+  			SSD1305_enableDisplay(true);
 		}
 		else if (bytes[0] == 0xAE) {
-			enableDisplay(false);
+			SSD1305_enableDisplay(false);
 		}
 		else if ( (bytes[0] & 0xF0) == 0xB0) {
 			//page cmd
@@ -194,7 +262,7 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 					//you can tell be looking at db: 00 for brightness 1, it is 08 for brightness 2		
 					if (DBval == 0x00) {
 						brightness = 1;
-								}
+					}
 					else {
 						brightness = 2;
 					}
@@ -254,60 +322,7 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 	}*/	
 }
 
-void setOLEDBrightness(uint8_t brightness) {
-	//ValA = 0x81 arg, valB = 0xDB arg
-	uint8_t valA, valB;
 
-	switch (brightness) {
-		case 1:
-			valA = 0x00;
-			valB = 0x00;
-			break;
-		case 2:
-			valA = 0x00;
-			valB = 0x08;
-			break;
-		case 3:
-			valA = 0x10;
-			valB = 0x0C;
-			break;
-		case 4:
-			valA = 0x20;
-			valB = 0x0C;
-			break;
-		case 5:
-			valA = 0x30;
-			valB = 0x24;
-			break;
-		case 6:
-			valA = 0x40;
-			valB = 0x24;
-			break;
-		case 7:
-			valA = 0x50;
-			valB = 0x2C;
-			break;
-		case 8:
-			valA = 0x70;
-			valB = 0x34;
-			break;
-		case 9:
-			valA = 0x80;
-			valB = 0x34;
-			break;
-		case 10:
-		default:
-			valA = 0xB0;
-			valB = 0x3C;
-			break;
-	}
-	//Send the commands to the OLED
-	send(true, 0x81);
-	send(true, valA);
-	send(true, 0xDB);
-	send(true, valB);
-
-}
 
 void handleCmdByte(uint8_t byte) {
 	static  CMD_STATE cmdState = CMD_AWAITING;
@@ -399,156 +414,55 @@ void uart_puts(char *string) {
     }
 }
 
-uint8_t ssd1305init [] = {
-	0xAE,   //Display OFF
-	0xD5,	//Display clock
-	0xF0,	//Display clock oscillator freq
-	0xA8,	//Multiplex ratio
-	0x3F, 	//Multiplex radio arg
-	0xD3,	//Display offset 
-	0x40,	//vertical offset//
-	0xad,   //External VCC supply (default anyway!)
-	0x8e,   //Mandatory (but unspecified) argument to 0xAD!
-	0xd8,	//Area colour mode
-	0x05,   //monochrome, low power display mode
-#ifdef VERTFLIP 
-	0xa1,
-	0xc8,
-#else
-	0xa0,
-	0xc0,
-#endif
-	0xda, 	//Hardware com pin configuration
-	0x12, 	//'alternative' com pin config, no left to right remap.
-	0x91, 	//current drive pulse width
-	0x3f, 	//args to above
-	0x3f,	//args to above
-	0x3f,	//args to above
-	0x3f,	//args to above
-	0x82,	//Set brightness for area color banks
-	0x80,   //Default brightness
-	0xd9,   //Set precharge period
-	0xf1,   //was f1 //F = phase 1, 1= phase 2
-	0xdb,   //VComH select
-	0x34,   //0.77x VCC (Default)
-	0xa6,   //Normal, non inverted display
-	0xa4,//fixme   //Display on - 'follows RAM'
-	//if we wanted to use horizontal addressing mode, we'd add:
-        //0x20, 0x00,
-        //default is page addressing mode, which is 0x22
-	0xAE,   //Display off
-};
-
-//FIXME - this needs to be DMA driven really!
-void sendFrameBufferToOLED() {
-	for (int i=0; i<8; ++i) {	
-		send(true, 0xB0 + i); //set page
-		send(true, 0x00); //set column offset lower  - 0 
-		send(true, 0x10); //set column offset higher - 0 
-		
-		for (int j=0; j<128; ++j) {
-			send(false, framebuffer[(i*128) + j]);
-		}
-	}
-}
-
-
-
-void initOLED() {
-    
-	
-    memset(framebuffer, 0x00, 128*8);	
-    //CS high
-    gpio_set(OUT_GPIO, OUT_CS_PIN);
-    
-    //command mode
-    gpio_clear(OUT_GPIO, OUT_D_C_PIN);
-
-    // Toggle reset 
-    gpio_set(OUT_GPIO, OUT_RST_PIN);
-    for (int i=0; i<1000; ++i) __asm__("NOP");
-    gpio_clear(OUT_GPIO, OUT_RST_PIN);
-    for (int i=0; i<1000; ++i) __asm__("NOP");
-    gpio_set(OUT_GPIO, OUT_RST_PIN);
-    
-    // Post reset pause
-    for (int i=0; i<5000; ++i) __asm__("NOP");
-    // Send the init string   
-    for (int i=0; i<30; ++i)  {
-    	send(true, ssd1305init[i]);
-    }
-   
-    //Zero the framebuffer, send it, then turn the display on to avoid random noise appearing 
-    memset(framebuffer, 0x00, 128*8);	
-    sendFrameBufferToOLED();
-    enableDisplay(true);
-}
-
 void init() {
-	// First, let's ensure that our clock is running off the high-speed
-    	// internal oscillator (HSI) at 48MHz
-    	rcc_clock_setup_in_hse_8mhz_out_72mhz();
-    	//Set up the peripheral clocks for GPIOA, USART1 (serial debug TX), and the SPI peripheral
-    	rcc_periph_clock_enable(RCC_GPIOA);
-    	rcc_periph_clock_enable(RCC_GPIOB);
+    rcc_clock_setup_in_hse_8mhz_out_72mhz();
+
+	//GPIO peripheral clocks on here
+	//Other peripheral clocks (eg USART) turned on by their own inits.
+	rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOB);
 
 #ifdef USB_DEBUG
-    	usart_setup();
-    	uart_puts("HELLO \r\n");
+    usart_setup();
+    uart_puts("HELLO \r\n");
 #endif
 
-    	spi_setup();
+    spi_setup();
+	//dma_setup();
 
-    	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,  GPIO11);
-		gpio_set(GPIOA, GPIO11);//pullup
- 
-     	//10 = D/C, B11 = RST, 12 is driven as CS
-    	gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO10 | GPIO11 | GPIO12);
-    	gpio_set(OUT_GPIO, OUT_CS_PIN);
-	initOLED();
+   	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,  GPIO11);
+	gpio_set(GPIOA, GPIO11);//pullup
+
+   	//10 = D/C, B11 = RST, 12 is driven as CS
+   	gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO10 | GPIO11 | GPIO12);
+   	gpio_set(OUT_GPIO, OUT_CS_PIN);
+
+	SSD1305_init();
 }
 
-
-
 int main() {
-
 	//Init all the things.
 	init();
 
-	static uint8_t lastBrightness = 10;
-
-
 	//DATA *from* the radio is received via SPI1 interrupt handler, and inserted into the framebuffer
+
+
+	//This kicks off the dma transfers, which will now self propagate for ever.
+	//sendPageToOled(0);
+
 	while (true) {
-		//If a framebuffer update is required, do it!
+		//If the FB has been updated, refresh the display.
+		//FIXME - needs to be DMA driven, and needs to only update the changed pages,
+		//rather than resend the entire buffer each time.
+
 		if (fb_updated) {
+			SSD1305_sendFB(framebuffer);
 			fb_updated = false;
-			sendFrameBufferToOLED();
-			//If the brightness level has changed, update it
-			if (lastBrightness != brightness) {
-				setOLEDBrightness(brightness);
-				lastBrightness = brightness;
-			}
 		}
+
 		//Idle a while
 		for (int i=0; i<100; ++i) __asm__("NOP");
-    	}
+    }
 }
 
-
-void send(bool cmd, uint8_t b) {
-	//CS low
-	gpio_clear(GPIOB, GPIO12);
-	
-	//Set command if appropriate
-	if (cmd) gpio_clear(GPIOB, GPIO10);
-	else gpio_set(GPIOB, GPIO10);
-	
-	spi_send(SPI2, b);
-        while (!(SPI_SR(SPI2) & SPI_SR_TXE));
-        while ((SPI_SR(SPI2) & SPI_SR_BSY));
-        
-	//CS_high	
-	gpio_set(GPIOB, GPIO12);
-}
 
