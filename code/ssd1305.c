@@ -46,7 +46,7 @@ uint8_t SSD1305_init_cmds [] = {
 	0x3f,	//args to above
 	0x3f,	//args to above
 	0x3f,	//args to above
-	0x82,	//Set brightness for area color banks
+	0x82,	//Set brightness
 	0x80,   //Default brightness
 	0xd9,   //Set precharge period
 	0xf1,   //was f1 //F = phase 1, 1= phase 2
@@ -88,7 +88,7 @@ void SSD1305_sendByte(bool cmd, uint8_t b) {
     //CS low
 	gpio_clear(GPIOB, OUT_CS_PIN);
 	
-	//Set command if appropriate
+	//Set data/command pin state
 	if (cmd) 
         gpio_clear(GPIOB, OUT_D_C_PIN);
 	else 
@@ -96,10 +96,13 @@ void SSD1305_sendByte(bool cmd, uint8_t b) {
 	
 	spi_send(SPI2, b);
 
-    //Wait for the transfer to *actually* complete.
-    while (!(SPI_SR(SPI2) & SPI_SR_TXE));
-    while ((SPI_SR(SPI2) & SPI_SR_BSY));
-        
+    while (!(SPI_SR(SPI2) & SPI_SR_TXE)) {
+		//Wait for transfer to start
+	}
+
+	while ((SPI_SR(SPI2) & SPI_SR_BSY)); {
+		//Wait fof transfer to finish
+	}
 	//CS_high - end of byte
 	gpio_set(GPIOB, OUT_CS_PIN);
 }

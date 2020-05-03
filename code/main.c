@@ -17,7 +17,6 @@
 # along with this project.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "libopencm3/stm32/rcc.h"
 #include "libopencm3/stm32/gpio.h"
 #include "libopencm3/stm32/usart.h"
