@@ -1,5 +1,23 @@
-#include "ssd1305.h"
+/*
+# Copyright (C) 2020 David Pye davidmpye@gmail.com
+# This file is part of the OLED compatibility project targetted at
+# Pure Radios Evoke Flow models
+#
+# This project is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# It is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this project.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
+#include "ssd1305.h"
 
 //This is our default block of 'init commands'
 uint8_t SSD1305_init_cmds [] = {

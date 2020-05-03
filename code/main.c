@@ -1,3 +1,23 @@
+/*
+# Copyright (C) 2020 David Pye davidmpye@gmail.com
+# This file is part of the OLED compatibility project targetted at
+# Pure Radios Evoke Flow models
+#
+# This project is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# It is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this project.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 #include "libopencm3/stm32/rcc.h"
 #include "libopencm3/stm32/gpio.h"
 #include "libopencm3/stm32/usart.h"
@@ -192,7 +212,6 @@ void dma1_channel4_5_isr() {
 void spi1_isr() {
 	//Hopefully this has gone off because a byte has arrived..
 	uint8_t byte = spi_read(SPI1);
-	bool isCmd;
 	//gpio11 high = data
 	if ( !gpio_get(GPIOA, GPIO11)) {
 		handleCmdByte(byte);
