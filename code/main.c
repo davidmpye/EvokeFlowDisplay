@@ -71,7 +71,7 @@ void init(void);
 int main(void);
 
 #ifdef USB_DEBUG
-void uart_puts(char *);
+void usartSend(char *);
 char *toHex(uint8_t);
 #endif
 
@@ -347,9 +347,9 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 			cmdsrx++;
 			if (cmdsrx == DEBUG_BUFFER_LEN) {
 				for (int i=0; i<DEBUG_BUFFER_LEN; ++i) {
-					uart_puts(toHex(cmdbuffer[i]));
-                	uart_puts("  ");
-					if (i!=0 && i%32==0) uart_puts("\r\n");
+					usartSend(toHex(cmdbuffer[i]));
+                	usartSend("  ");
+					if (i!=0 && i%32==0) usartSend("\r\n");
 			}
 			cmdsrx =0;
 			}
@@ -368,6 +368,8 @@ void handleCmdByte(uint8_t byte) {
 	//Actually, we only handle up to 2-byte commands (the brightness ones!)
 	//and the others seem to be either completely unused (or just part of the
 	//initial power-on init string, and not something we need to understand.
+
+	//When the complete command has been received, it will be passed to handleCmd()
 
 	static  CMD_STATE cmdState = CMD_AWAITING;
      //Default to expecting a 1 byte command
@@ -451,7 +453,7 @@ void handleDataByte(uint8_t byte) {
 	fb_updated = true;
 }
 
-void uart_puts(char *string) {
+void usartSend(char *string) {
     while (*string) {
         usart_send_blocking(USART1, *string);
         string++;
@@ -468,7 +470,7 @@ void init() {
 
 #ifdef USB_DEBUG
     initUSART();
-    uart_puts("HELLO \r\n");
+    usartSend("Init\r\n");
 #endif
 
     initSPI();
