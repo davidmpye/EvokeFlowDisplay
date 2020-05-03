@@ -137,6 +137,7 @@ void SSD1305_setBrightness(uint8_t brightness) {
 	SSD1305_sendByte(true, 0x81);
 	SSD1305_sendByte(true, valA);
 	SSD1305_sendByte(true, 0xDB);
+	SSD1305_sendByte(true, valB);
 }
 
 void SSD1305_enableDisplay(bool state) {
@@ -149,18 +150,16 @@ void SSD1305_enableDisplay(bool state) {
 }
 
 void SSD1305_sendPage(uint8_t page, uint8_t *fb) {
-    for (int i=0; i<8; ++i) {	
-		SSD1305_sendByte(true, 0xB0 + i); //set page
-		SSD1305_sendByte(true, 0x00); //set column offset lower  - 0 
-		SSD1305_sendByte(true, 0x10); //set column offset higher - 0 
+	SSD1305_sendByte(true, 0xB0 + page); //set page
+	SSD1305_sendByte(true, 0x00); //set column offset lower  - 0 
+	SSD1305_sendByte(true, 0x10); //set column offset higher - 0 
 		
-		for (int j=0; j<128; ++j) {
-			SSD1305_sendByte(false, fb[(i*128) + j]);
-		}
-    }
+	for (int i=0; i<128; ++i) {
+		SSD1305_sendByte(false, fb[(page*128) + i]);
+	}
 } 
 
 void SSD1305_sendFB(uint8_t *fb) {
     for (int i=0; i<8; ++i) 
-        SSD1305_sendPage(i, *fb);
+        SSD1305_sendPage(i, fb);
 } 
