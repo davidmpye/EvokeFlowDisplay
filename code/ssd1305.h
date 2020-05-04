@@ -36,6 +36,10 @@ void SSD1305_sendFB(volatile uint8_t *fb);  //Send the whole framebuffer to the 
 
 void SSD1305_sendByte(bool cmd, uint8_t byte); //Low level byte send.
 
+void SSD1305_preDmaTransfer(uint8_t page);
+void SSD1305_postDmaTransfer(uint8_t page);
+
+
 #endif
 
 

@@ -31,7 +31,8 @@
 //1.15MOhm therefore should be the IREF current resistor
 //The radio seems to use 1.5MOHm tho... 
 
-#define USB_DEBUG
+#define USE_DMA
+//#define USB_DEBUG
 //#define VERTFLIP
 
 //Our framebuffer
@@ -40,6 +41,7 @@ volatile uint8_t framebuffer[128*8];
 volatile unsigned int fb_offset = 0;
 //Whether the fb has changed
 volatile bool fb_updated = false;
+volatile bool dmaComplete = true;
 
 uint8_t brightness = 0; //Display brightness = 0->10
 
@@ -105,8 +107,11 @@ static void initSPI() {
     );
 
 	//rx interrupt on
+	nvic_set_priority(NVIC_SPI1_IRQ, 0);
 	nvic_enable_irq(NVIC_SPI1_IRQ);
+
 	spi_enable_rx_buffer_not_empty_interrupt(SPI1);
+
 	//Slave mode on.
 	spi_set_slave_mode(SPI1);
 	
@@ -117,6 +122,9 @@ static void initSPI() {
 	//NSS = 12(not used), SCK = 13, MISO = 14(not used), MOSI = 15
 	gpio_set_mode( GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO13 | GPIO14 | GPIO15);
 	spi_reset(SPI2);
+		/* Explicitly disable I2S in favour of SPI operation */
+	SPI2_I2SCFGR = 0;
+	
 	spi_init_master(
         	SPI2,
         	SPI_CR1_BAUDRATE_FPCLK_DIV_256,
@@ -132,13 +140,14 @@ static void initSPI() {
 	spi_enable(SPI2);
 }
 
-/*
-void dma_setup() {
+#ifdef USE_DMA
+
+void initDMA() {
     // Enable DMA clock
     rcc_periph_clock_enable(RCC_DMA1);
     // In order to use SPI2_TX, we need DMA 1 Channel 5
     dma_channel_reset(DMA1, DMA_CHANNEL5);
-    // SPI2 data register as output
+	// SPI2 data register as output
     dma_set_peripheral_address(DMA1, DMA_CHANNEL5, (uint32_t)&SPI2_DR);
     // We will be using system memory as the source data
     dma_set_read_from_memory(DMA1, DMA_CHANNEL5);
@@ -150,8 +159,8 @@ void dma_setup() {
     // data register doesn't move around as we write to it.
     dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL5);
     // We want to use 8 bit transfers
-    dma_set_peripheral_size(DMA1, DMA_CHANNEL5, DMA_CCR_PSIZE_8BIT);
-    dma_set_memory_size(DMA1, DMA_CHANNEL5, DMA_CCR_MSIZE_8BIT);
+    dma_set_peripheral_size(DMA1, DMA_CHANNEL5, DMA_CCR_MSIZE_8BIT );
+    dma_set_memory_size(DMA1, DMA_CHANNEL5, DMA_CCR_MSIZE_8BIT );
     // We don't have any other DMA transfers going, but if we did we can use
     // priorities to try to ensure time-critical transfers are not interrupted
     // by others. In this case, it is alone.
@@ -161,68 +170,60 @@ void dma_setup() {
     dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL5);
     // We also need to enable the relevant interrupt in the interrupt
     // controller, and assign it a priority.
-    nvic_set_priority(NVIC_DMA1_CHANNEL5_IRQ, 0);
+    nvic_set_priority(NVIC_DMA1_CHANNEL5_IRQ, DMA_CCR_PL_LOW);
     nvic_enable_irq(NVIC_DMA1_CHANNEL5_IRQ);
 }
 
 
-void sendPageToOled(uint8_t page) {
+void dmaTransferToScreen(uint8_t page) {
+	dmaComplete = false;
+	//Get the display ready to receive the data
+	SSD1305_preDmaTransfer(page);
+
 	//set starting offset of transfer
-  	dma_set_memory_address(DMA1, DMA_CHANNEL5, (uint32_t)&framebuffer[128*page]);
+	dma_set_memory_address(DMA1, DMA_CHANNEL5, (uint32_t)&framebuffer[128*page]);
 	//128 bytes for this row of the framebuffer
     dma_set_number_of_data(DMA1, DMA_CHANNEL5, 128);
+	
 	//dma on
     dma_enable_channel(DMA1, DMA_CHANNEL5);
 	
-	//Send commands to specify page
-	send(true, 0xB0 + page); //set page
-	send(true, 0x00); //set column offset lower  - 0 
-	send(true, 0x10); //set column offset higher - 0 
-
-	//Manually pull CS low again
-	gpio_clear(GPIOB, OUT_CS_PIN);
-
-	//Manually pull D/C pin high to signify data
-	gpio_set(GPIOB, GPIO10);
-
-	//start DMA send of the data.
+	//start DMA transfer
 	spi_enable_tx_dma(SPI2);
 }
 
 
-void dma1_channel4_5_isr() {
-
-	static uint8_t lastPageSent = 0;
-
+void dma1_channel5_isr() {
     // Check that we got triggered because the transfer is complete, by
     // checking the Transfer Complete Interrupt Flag
-    if (dma_get_interrupt_flag(DMA1, DMA_CHANNEL5, DMA_TCIF)) {
+	if (dma_get_interrupt_flag(DMA1, DMA_CHANNEL5, DMA_TCIF)) {
 		//reset flag register.
         dma_clear_interrupt_flags(DMA1, DMA_CHANNEL5, DMA_TCIF);
 		//wait until transfer complete
-        while (SPI_SR(SPI2) & SPI_SR_BSY) {
-			//wait.
+
+		while (!(SPI_SR(SPI2) & SPI_SR_TXE)) {
+			//Wait for transfer to start
 		}
 
+		while ((SPI_SR(SPI2) & SPI_SR_BSY)) {
+			//Wait for transfer to finish
+		}
+
+		SSD1305_postDmaTransfer(0); //Page irrelevant.
+
+	for (int i=0; i<1000; ++i) __asm__("NOP");
 
         // Turn our DMA channel back off, in preparation of the next transfer
         spi_disable_tx_dma(SPI2);
         dma_disable_channel(DMA1, DMA_CHANNEL5);
 
-		//CS to high, transfer finished.
-		gpio_set(GPIOB, OUT_CS_PIN);
 
-
-		if (lastPageSent == 7) 
-			lastPageSent = 0;
-		else lastPageSent++;
-
-		//This will send the next page via DMA
-		sendPageToOled(lastPageSent);
-
+		dmaComplete = true;
     }
+
 }
-*/
+
+#endif
 
 void spi1_isr() {
 	//Hopefully this has gone off because a byte has arrived..
@@ -233,8 +234,6 @@ void spi1_isr() {
 	}
 	else handleDataByte(byte);
 }
-
-
 
 #ifdef USB_DEBUG
 //NB not thread safe...
@@ -256,10 +255,10 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 
 	if (len == 1) {
 		if (bytes[0] == 0xAF) {
-  			SSD1305_enableDisplay(true);
+  		//	SSD1305_enableDisplay(true);
 		}
 		else if (bytes[0] == 0xAE) {
-			SSD1305_enableDisplay(false);
+		//	SSD1305_enableDisplay(false);
 		}
 		else if ( (bytes[0] & 0xF0) == 0xB0) {
 			//page cmd
@@ -370,7 +369,7 @@ void handleCmdByte(uint8_t byte) {
 	//initial power-on init string, and not something we need to understand.
 
 	//When the complete command has been received, it will be passed to handleCmd()
-
+ 
 	static  CMD_STATE cmdState = CMD_AWAITING;
      //Default to expecting a 1 byte command
 	static  uint8_t bytesExpected = 1;
@@ -474,7 +473,9 @@ void init() {
 #endif
 
     initSPI();
-	//dma_setup();
+#ifdef USE_DMA
+	initDMA();
+#endif
 
    	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,  GPIO11);
 	gpio_set(GPIOA, GPIO11);//pullup
@@ -494,23 +495,34 @@ int main() {
 	//or a command (eg brightness) is interpreted, translated and directly sent out from within the receive
 	//interrupt handler call stack.
 
-	//DMA - currently not yet used
-	//This kicks off the dma transfers, which will now self propagate for ever.
-	//sendPageToOled(0);
+	
+#ifdef USE_DMA
+	while (true) {
+		static volatile uint8_t lastPageSent = 0;
+		//rather than resend the entire buffer each time.
+		while (!dmaComplete) {
+			for (int i=0; i<500; ++i) __asm__("NOP");
+		}
+	
+		dmaTransferToScreen(lastPageSent);
+		if (lastPageSent == 7)  {
+		
+			lastPageSent = 0;
+		}
+		else lastPageSent++;		
+    }
+#else
 
 	while (true) {
-		//If the FB has been updated, refresh the display.
-		//FIXME - needs to be DMA driven, and needs to only update the changed pages,
-		//rather than resend the entire buffer each time.
-
 		if (fb_updated) {
 			SSD1305_sendFB(framebuffer);
 			fb_updated = false;
 		}
 
-		//Idle a while
-		for (int i=0; i<100; ++i) __asm__("NOP");
-    }
+
+	}
+#endif
+
 }
 
 
