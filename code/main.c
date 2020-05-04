@@ -31,7 +31,7 @@
 //1.15MOhm therefore should be the IREF current resistor
 //The radio seems to use 1.5MOHm tho... 
 
-#define USE_DMA
+//#define USE_DMA
 //#define USB_DEBUG
 //#define VERTFLIP
 
