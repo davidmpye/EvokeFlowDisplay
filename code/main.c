@@ -42,6 +42,7 @@ volatile unsigned int fb_offset = 0;
 //Whether the fb has changed
 volatile bool fb_updated = false;
 volatile bool dmaComplete = true;
+bool pageChanged[8];
 
 uint8_t brightness = 0; //Display brightness = 0->10
 
@@ -450,7 +451,7 @@ void handleDataByte(uint8_t byte) {
 	//If we've now reached the end of this page address, wrap it (like the ssd1305 does)
 	if (fb_offset%128 == 0) fb_offset -= 128;
 	//Tell the main loop that this page has been changed so needs updating
-	fb_updated = true;
+	pageChanged[(int)fb_offset/128] = true;
 }
 
 void usartSend(char *string) {
@@ -486,6 +487,11 @@ void init() {
    	gpio_set(OUT_GPIO, OUT_CS_PIN);
 
 	SSD1305_init();
+
+	//Mark all pages as changed
+	for (int i=0; i<8; ++i) {
+		pageChanged[i] = true; 
+	}
 }
 
 int main() {
@@ -513,14 +519,15 @@ int main() {
 		else lastPageSent++;		
     }
 #else
-
 	while (true) {
-		if (fb_updated) {
-			SSD1305_sendFB(framebuffer);
-			fb_updated = false;
+		for (int i=0; i<8; ++i) {
+			if (pageChanged[i]) {
+				SSD1305_sendPage(i, framebuffer);
+				pageChanged[i] = false;
+			}
 		}
 		//Idle for a bit
-		for (int i=0; i<500; ++i) __asm__("NOP");
+		for (int i=0; i<50; ++i) __asm__("NOP");
 	}
 #endif
 
