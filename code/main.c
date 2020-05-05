@@ -42,6 +42,9 @@ volatile unsigned int fb_offset = 0;
 volatile bool fb_updated = false;
 volatile bool dmaComplete = true;
 volatile bool pageChanged[8];
+
+volatile bool displayOn = true;
+
 volatile uint8_t page, col; //used to calculate/store framebuffer offset
 
 volatile brightness = 0; //Display brightness = 0->10
@@ -254,9 +257,11 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 	if (len == 1) {
 		if (bytes[0] == 0xAF) {
   			SSD1305_enableDisplay(true);
+			displayOn = true;
 		}
 		else if (bytes[0] == 0xAE) {
 			SSD1305_enableDisplay(false);
+			displayOn = true;
 		}
 		else if ( (bytes[0] & 0xF0) == 0xB0) {
 			//page cmd
@@ -503,19 +508,23 @@ int main() {
 	
 #ifdef USE_DMA
 	while (true) {
-		for (int i=0; i<8; ++i) {
-			if (pageChanged[i]) {
-				pageChanged[i] = false;
-				dmaTransferToScreen(i);
-				//Wait for the DMA transfer to complete.
-				while (!dmaComplete) {
-					for (int i=0; i<50; ++i) __asm__("NOP");
-				}		
-				//This doesnt bother to use DMA..
-				SSD1305_sendCmdBlock();
+		//Don't bother updating the screen if the display is off - what's the point?
+		if (displayOn) {
+			for (int i=0; i<8; ++i) {
+				if (pageChanged[i]) {
+					pageChanged[i] = false;
+					dmaTransferToScreen(i);
+					//Wait for the DMA transfer to complete.
+					while (!dmaComplete) {
+						for (int i=0; i<50; ++i) __asm__("NOP");
+					}		
+				}
 			}
-		}
-    }
+			//This doesnt bother to use DMA as it's quite short and the overhead isnt worth it!
+			SSD1305_sendCmdBlock();
+			for (int i=0; i<50; ++i) __asm__("NOP");
+    	}
+	}
 #else
 	while (true) {
 		for (int i=0; i<8; ++i) {
