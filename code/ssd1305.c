@@ -203,23 +203,17 @@ void SSD1305_preDmaTransfer(uint8_t page) {
 	SSD1305_sendByte(true, 0x00); //set column offset lower  - 0 
 	SSD1305_sendByte(true, 0x10); //set column offset higher - 0 
 
-
-
 	//Pull CS low	
 	gpio_clear(GPIOB, OUT_CS_PIN);
 	
 	//Pull data/cmd pin high so the SSD1305 is expecting data
 	gpio_set(GPIOB, OUT_D_C_PIN);
-
 }
 
 void SSD1305_postDmaTransfer(uint8_t page) {
-
 	//Nothing page specific here, just pull CS high to signify end of data
-	
 	gpio_set(GPIOB, OUT_CS_PIN);
 	gpio_clear(GPIOB, OUT_D_C_PIN);
-
 }
 
 void SSD1305_sendCmdBlock() {

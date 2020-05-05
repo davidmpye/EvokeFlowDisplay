@@ -31,7 +31,7 @@
 //1.15MOhm therefore should be the IREF current resistor
 //The radio seems to use 1.5MOHm tho... 
 
-//#define USE_DMA
+#define USE_DMA
 //#define USB_DEBUG
 
 //Our framebuffer
@@ -42,9 +42,9 @@ volatile unsigned int fb_offset = 0;
 volatile bool fb_updated = false;
 volatile bool dmaComplete = true;
 volatile bool pageChanged[8];
-uint8_t page, col; //used to calculate/store framebuffer offset
+volatile uint8_t page, col; //used to calculate/store framebuffer offset
 
-uint8_t brightness = 0; //Display brightness = 0->10
+volatile brightness = 0; //Display brightness = 0->10
 
 #ifdef USB_DEBUG
 //Cmd buffer for dumping to USB for debug purposes	
@@ -170,9 +170,9 @@ void initDMA() {
     // Since we need to pull the register clock high after the transfer is
     // complete, enable transfer complete interrupts.
     dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL5);
-    // We also need to enable the relevant interrupt in the interrupt
-    // controller, and assign it a priority.
-    nvic_set_priority(NVIC_DMA1_CHANNEL5_IRQ, DMA_CCR_PL_LOW);
+	//This interrupt needs to be lower priority than the SPI receive interrupt,
+	//otherwise we glitch and lose data
+    nvic_set_priority(NVIC_DMA1_CHANNEL5_IRQ, 50);
     nvic_enable_irq(NVIC_DMA1_CHANNEL5_IRQ);
 }
 
@@ -202,7 +202,8 @@ void dma1_channel5_isr() {
 		//reset flag register.
         dma_clear_interrupt_flags(DMA1, DMA_CHANNEL5, DMA_TCIF);
 		//wait until transfer complete
-
+	    spi_disable_tx_dma(SPI2);
+        dma_disable_channel(DMA1, DMA_CHANNEL5);
 		while (!(SPI_SR(SPI2) & SPI_SR_TXE)) {
 			//Wait for transfer to start
 		}
@@ -216,8 +217,7 @@ void dma1_channel5_isr() {
 	for (int i=0; i<1000; ++i) __asm__("NOP");
 
         // Turn our DMA channel back off, in preparation of the next transfer
-        spi_disable_tx_dma(SPI2);
-        dma_disable_channel(DMA1, DMA_CHANNEL5);
+
 		dmaComplete = true;
     }
 
@@ -448,7 +448,7 @@ void handleDataByte(uint8_t byte) {
 	//Tell the main loop that this page has been changed so needs updating
 	pageChanged[page] = true;
 	fb_offset ++;
-	//If we've now reached the end of this page address, wrap it (like the ssd1305 does)
+	//If we've now reached the end of this page address, wrap it back to the start of that page (like the ssd1305 does)
 	if (fb_offset%128 == 0) fb_offset  = page * 128 ;
 }
 
@@ -493,33 +493,37 @@ void init() {
 }
 
 int main() {
+
 	//Init all the things.
 	init();
 
 	//DATA *from* the radio is received via SPI1 interrupt handler, and inserted into the framebuffer
-	//or a command (eg brightness) is interpreted, translated and directly sent out from within the receive
-	//interrupt handler call stack.
-
+	//or a command (eg brightness) is interpreted, added to the command block within the driver, and sent once the 
+	//data send is complete. 
 	
 #ifdef USE_DMA
 	while (true) {
 		for (int i=0; i<8; ++i) {
-			if (pageChanged[i]) {
+		//	if (pageChanged[i]) {
 				dmaTransferToScreen(i);
 				//Wait for the DMA transfer to complete.
 				while (!dmaComplete) {
-					for (int i=0; i<500; ++i) __asm__("NOP");
+					for (int i=0; i<50; ++i) __asm__("NOP");
 				}		
-			}
+				//This doesnt bother to use DMA..
+				SSD1305_sendCmdBlock();
+
+		//	}
 		}
     }
 #else
 	while (true) {
 		for (int i=0; i<8; ++i) {
-			if (pageChanged[i]) {
-				pageChanged[i] = false;
+	//		if (pageChanged[i]) {
 				SSD1305_sendPage(i, framebuffer);
-			}
+	//			pageChanged[i] = false;
+
+	//		}
 		}
 		//Send pending commands if any
 		SSD1305_sendCmdBlock();
