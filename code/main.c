@@ -46,7 +46,6 @@ volatile bool dmaComplete = true;
 uint8_t brightness = 0; //Display brightness = 0->10
 
 #ifdef USB_DEBUG
-
 //Cmd buffer for dumping to USB for debug purposes	
 #define DEBUG_BUFFER_LEN 64
 uint8_t cmdbuffer[DEBUG_BUFFER_LEN];
@@ -77,6 +76,7 @@ void usartSend(char *);
 char *toHex(uint8_t);
 #endif
 
+#ifdef USB_DEBUG
 static void initUSART() {
     rcc_periph_clock_enable(RCC_USART1);	
 	// Just set up TX for now, RX pin will require more work!
@@ -90,6 +90,7 @@ static void initUSART() {
 	/* Finally enable the USART. */
 	usart_enable(USART1);
 }
+#endif
 
 static void initSPI() {
     rcc_periph_clock_enable(RCC_SPI1);	
@@ -518,8 +519,8 @@ int main() {
 			SSD1305_sendFB(framebuffer);
 			fb_updated = false;
 		}
-
-
+		//Idle for a bit
+		for (int i=0; i<500; ++i) __asm__("NOP");
 	}
 #endif
 
