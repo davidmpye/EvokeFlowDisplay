@@ -504,7 +504,8 @@ int main() {
 #ifdef USE_DMA
 	while (true) {
 		for (int i=0; i<8; ++i) {
-		//	if (pageChanged[i]) {
+			if (pageChanged[i]) {
+				pageChanged[i] = false;
 				dmaTransferToScreen(i);
 				//Wait for the DMA transfer to complete.
 				while (!dmaComplete) {
@@ -513,7 +514,7 @@ int main() {
 				//This doesnt bother to use DMA..
 				SSD1305_sendCmdBlock();
 
-		//	}
+			}
 		}
     }
 #else
