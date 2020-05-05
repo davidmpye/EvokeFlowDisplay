@@ -513,7 +513,6 @@ int main() {
 				}		
 				//This doesnt bother to use DMA..
 				SSD1305_sendCmdBlock();
-
 			}
 		}
     }
