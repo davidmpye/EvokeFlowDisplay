@@ -25,6 +25,7 @@
 #include "libopencm3/stm32/gpio.h"
 
 
+//#define VERTFLIP
 
 
 
@@ -38,6 +39,8 @@ void SSD1305_sendByte(bool cmd, uint8_t byte); //Low level byte send.
 
 void SSD1305_preDmaTransfer(uint8_t page);
 void SSD1305_postDmaTransfer(uint8_t page);
+
+void SSD1305_sendCmdBlock();
 
 
 #endif

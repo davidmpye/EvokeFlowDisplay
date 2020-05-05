@@ -33,7 +33,6 @@
 
 //#define USE_DMA
 //#define USB_DEBUG
-//#define VERTFLIP
 
 //Our framebuffer
 volatile uint8_t framebuffer[128*8];
@@ -42,7 +41,8 @@ volatile unsigned int fb_offset = 0;
 //Whether the fb has changed
 volatile bool fb_updated = false;
 volatile bool dmaComplete = true;
-bool pageChanged[8];
+volatile bool pageChanged[8];
+uint8_t page, col; //used to calculate/store framebuffer offset
 
 uint8_t brightness = 0; //Display brightness = 0->10
 
@@ -218,8 +218,6 @@ void dma1_channel5_isr() {
         // Turn our DMA channel back off, in preparation of the next transfer
         spi_disable_tx_dma(SPI2);
         dma_disable_channel(DMA1, DMA_CHANNEL5);
-
-
 		dmaComplete = true;
     }
 
@@ -250,17 +248,15 @@ char *toHex(uint8_t buf) {
 #endif
 
 void handleCommand(uint8_t *bytes, uint8_t len) {
-	static uint8_t page, col; //used to calculate/store framebuffer offset
 	bool addrFound =  false;
-
 	static uint8_t DBval = 0x00;
 
 	if (len == 1) {
 		if (bytes[0] == 0xAF) {
-  		//	SSD1305_enableDisplay(true);
+  			SSD1305_enableDisplay(true);
 		}
 		else if (bytes[0] == 0xAE) {
-		//	SSD1305_enableDisplay(false);
+			SSD1305_enableDisplay(false);
 		}
 		else if ( (bytes[0] & 0xF0) == 0xB0) {
 			//page cmd
@@ -286,8 +282,9 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 			//Don't try to trick us to write off the end of the buffer...
 			//-4 corrects an offset because of the original display being wired 'backwards', and the ssd1305 
 			//gdram buffer being 132byte not 128.
-			if (fb_offset >= 128*64) fb_offset = 0;
+
 			if (fb_offset >= 4) fb_offset -=4;
+			if (fb_offset >= 128*8) fb_offset = 0;
 		}
 	}
 	else if (len == 2) {
@@ -329,6 +326,7 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 					brightness = 10;
 					break;
 			}
+			SSD1305_setBrightness(brightness);
 		}
 		else if (bytes[0] == 0xDB) {
 			//We need to store this value to work out what the brightness is as levels 1 and 0 both have the 
@@ -447,11 +445,11 @@ void handleCmdByte(uint8_t byte) {
 void handleDataByte(uint8_t byte) {
 	//Store this byte in the framebuffer at the current pointer address.
 	framebuffer[fb_offset] = byte;
+	//Tell the main loop that this page has been changed so needs updating
+	pageChanged[page] = true;
 	fb_offset ++;
 	//If we've now reached the end of this page address, wrap it (like the ssd1305 does)
-	if (fb_offset%128 == 0) fb_offset -= 128;
-	//Tell the main loop that this page has been changed so needs updating
-	pageChanged[(int)fb_offset/128] = true;
+	if (fb_offset%128 == 0) fb_offset  = page * 128 ;
 }
 
 void usartSend(char *string) {
@@ -505,29 +503,31 @@ int main() {
 	
 #ifdef USE_DMA
 	while (true) {
-		static volatile uint8_t lastPageSent = 0;
-		//rather than resend the entire buffer each time.
-		while (!dmaComplete) {
-			for (int i=0; i<500; ++i) __asm__("NOP");
+		for (int i=0; i<8; ++i) {
+			if (pageChanged[i]) {
+				dmaTransferToScreen(i);
+				//Wait for the DMA transfer to complete.
+				while (!dmaComplete) {
+					for (int i=0; i<500; ++i) __asm__("NOP");
+				}		
+			}
 		}
-	
-		dmaTransferToScreen(lastPageSent);
-		if (lastPageSent == 7)  {
-		
-			lastPageSent = 0;
-		}
-		else lastPageSent++;		
     }
 #else
 	while (true) {
 		for (int i=0; i<8; ++i) {
 			if (pageChanged[i]) {
-				SSD1305_sendPage(i, framebuffer);
 				pageChanged[i] = false;
+				SSD1305_sendPage(i, framebuffer);
 			}
 		}
+		//Send pending commands if any
+		SSD1305_sendCmdBlock();
+
+
 		//Idle for a bit
-		for (int i=0; i<50; ++i) __asm__("NOP");
+		for (int i=0; i<10; ++i) __asm__("NOP");
+		
 	}
 #endif
 

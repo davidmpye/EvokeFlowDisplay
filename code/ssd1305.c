@@ -57,9 +57,20 @@ uint8_t SSD1305_init_cmds [] = {
 	//if we wanted to use horizontal addressing mode, we'd add:
         //0x20, 0x00,
         //default is page addressing mode, which is 0x22
-	0xAE,   //Display off
+	0xAF,   //Display on
 };
 
+#define CMDBLOCK_LEN 5
+#define BRIGHTNESS_81_OFFSET 1
+#define BRIGHTNESS_DB_OFFSET 3
+#define DISPLAY_STATE_OFFSET 4
+uint8_t SSD1305_cmdBlock[] = {
+	0x81, //brightness
+	0xB0, //full
+	0xDB, //brightness
+	0xC3, //full,
+	0xAF, //display state
+};
 
 void SSD1305_init() {
     //CS high
@@ -81,7 +92,6 @@ void SSD1305_init() {
     for (int i=0; i<30; ++i)  {
     	SSD1305_sendByte(true, SSD1305_init_cmds[i]);
     }
-    SSD1305_enableDisplay(true);
 }
 
 void SSD1305_sendByte(bool cmd, uint8_t b) {
@@ -94,6 +104,8 @@ void SSD1305_sendByte(bool cmd, uint8_t b) {
 	else 
         gpio_set(GPIOB, OUT_D_C_PIN);
 	
+	for (int i=0; i<10; ++i) __asm__("NOP");
+
 	spi_send(SPI2, b);
 
     while (!(SPI_SR(SPI2) & SPI_SR_TXE)) {
@@ -103,6 +115,8 @@ void SSD1305_sendByte(bool cmd, uint8_t b) {
 	while ((SPI_SR(SPI2) & SPI_SR_BSY)) {
 		//Wait fof transfer to finish
 	}
+	for (int i=0; i<10; ++i) __asm__("NOP");
+
 	//CS_high - end of byte
 	gpio_set(GPIOB, OUT_CS_PIN);
 }
@@ -154,19 +168,16 @@ void SSD1305_setBrightness(uint8_t brightness) {
 			valB = 0x3C;
 			break;
 	}
-	//Send the commands to the OLED
-	SSD1305_sendByte(true, 0x81);
-	SSD1305_sendByte(true, valA);
-	SSD1305_sendByte(true, 0xDB);
-	SSD1305_sendByte(true, valB);
+	SSD1305_cmdBlock[BRIGHTNESS_81_OFFSET] = valA;
+	SSD1305_cmdBlock[BRIGHTNESS_DB_OFFSET] = valB;
 }
 
 void SSD1305_enableDisplay(bool state) {
     if (state) {
-		SSD1305_sendByte(true, 0xAF);
+		SSD1305_cmdBlock[DISPLAY_STATE_OFFSET] = 0xAF;
 	}
 	else {
-		SSD1305_sendByte(true, 0xAE);
+		SSD1305_cmdBlock[DISPLAY_STATE_OFFSET] = 0xAE;
 	}
 }
 
@@ -209,4 +220,10 @@ void SSD1305_postDmaTransfer(uint8_t page) {
 	gpio_set(GPIOB, OUT_CS_PIN);
 	gpio_clear(GPIOB, OUT_D_C_PIN);
 
+}
+
+void SSD1305_sendCmdBlock() {
+ 	for (int i=0; i<CMDBLOCK_LEN; ++i)  {
+    	SSD1305_sendByte(true, SSD1305_cmdBlock[i]);
+ 	}
 }
