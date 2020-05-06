@@ -31,7 +31,6 @@
 //1.15MOhm therefore should be the IREF current resistor
 //The radio seems to use 1.5MOHm tho... 
 
-#define USE_DMA
 //#define USB_DEBUG
 
 //Our framebuffer
@@ -145,8 +144,6 @@ static void initSPI() {
 	spi_enable(SPI2);
 }
 
-#ifdef USE_DMA
-
 void initDMA() {
     // Enable DMA clock
     rcc_periph_clock_enable(RCC_DMA1);
@@ -225,8 +222,6 @@ void dma1_channel5_isr() {
     }
 
 }
-
-#endif
 
 void spi1_isr() {
 	//Hopefully this has gone off because a byte has arrived..
@@ -478,9 +473,7 @@ void init() {
 #endif
 
     initSPI();
-#ifdef USE_DMA
 	initDMA();
-#endif
 
    	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,  GPIO11);
 	gpio_set(GPIOA, GPIO11);//pullup
@@ -506,7 +499,6 @@ int main() {
 	//or a command (eg brightness) is interpreted, added to the command block within the driver, and sent once the 
 	//data send is complete. 
 	
-#ifdef USE_DMA
 	while (true) {
 		//Don't bother updating the screen if the display is off - what's the point?
 		if (displayOn) {
@@ -525,25 +517,6 @@ int main() {
 			for (int i=0; i<50; ++i) __asm__("NOP");
     	}
 	}
-#else
-	while (true) {
-		for (int i=0; i<8; ++i) {
-	//		if (pageChanged[i]) {
-				SSD1305_sendPage(i, framebuffer);
-	//			pageChanged[i] = false;
-
-	//		}
-		}
-		//Send pending commands if any
-		SSD1305_sendCmdBlock();
-
-
-		//Idle for a bit
-		for (int i=0; i<10; ++i) __asm__("NOP");
-		
-	}
-#endif
-
 }
 
 
