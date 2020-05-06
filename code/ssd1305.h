@@ -24,10 +24,7 @@
 #include "libopencm3/stm32/spi.h"
 #include "libopencm3/stm32/gpio.h"
 
-
 //#define VERTFLIP
-
-
 
 void SSD1305_init(void);
 void SSD1305_setBrightness(uint8_t);
@@ -37,12 +34,10 @@ void SSD1305_sendFB(volatile uint8_t *fb);  //Send the whole framebuffer to the 
 
 void SSD1305_sendByte(bool cmd, uint8_t byte); //Low level byte send.
 
-void SSD1305_preDmaTransfer(uint8_t page);
-void SSD1305_postDmaTransfer(uint8_t page);
+void SSD1305_preDmaTransfer(uint8_t page); //Send the page select commands pre DMA transfer of the main page data block
+void SSD1305_postDmaTransfer(uint8_t page); //Send the post block transfer commands (if any), and toggle CS/D_C pins as required.
 
 void SSD1305_sendCmdBlock();
-
-
 #endif
 
 
