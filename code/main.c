@@ -266,12 +266,14 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 			col = 0;
 			addrFound = true;
 		}
-		else if ((bytes[0] & 0xF0) == 0x10) {
+		else if ((bytes[0] & 0xF0) == 0x10) {			
+			col &=0x0F;
 			col |= ((bytes[0]&0x0F)<<4);
 			addrFound = true;
 		}
 		else if ( (bytes[0] & 0xF0) == 0x00) {
             //collow
+			col &= 0xF0;
             col |=  (bytes[0]&0x0F) ;
 			addrFound = true;
 		}
