@@ -263,7 +263,6 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 			page = bytes[0]&0x0F;
 			//specified page must be <=7
 			if (page > 7) page = 0;
-			col = 0;
 			addrFound = true;
 		}
 		else if ((bytes[0] & 0xF0) == 0x10) {			
