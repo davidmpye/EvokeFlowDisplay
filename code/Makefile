@@ -1,6 +1,5 @@
 # We only need to build our one source file
-OBJS = main.o ssd1305.o
-
+OBJS = main.o ssd1305.o nt7538.o
 # We've got opencm3 in the folder with us
 OPENCM3_DIR := ./libopencm3
 
