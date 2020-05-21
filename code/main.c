@@ -27,6 +27,19 @@
 #include "ssd1305.h"
 #include "pins.h"
 
+//Choose your output display type here - OLED or LCD
+#define NT7538
+#define SSD1305
+
+#if defined NT7538
+
+#elif defined SSD1305 SSD1305_init
+
+#else
+#error You must define either NT7538 or SSD1305 as an output display.
+#endif
+
+
 //Note VCC supplied by radio is 14.55volts.
 //1.15MOhm therefore should be the IREF current resistor
 //The radio seems to use 1.5MOHm tho... 
