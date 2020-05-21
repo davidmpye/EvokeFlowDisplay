@@ -1,5 +1,4 @@
 EESchema Schematic File Version 4
-LIBS:pureevolvenew-cache
 EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
@@ -17,7 +16,7 @@ $EndDescr
 Wire Wire Line
 	1100 1000 1100 1350
 $Comp
-L power:GND #PWR0107
+L evoke-rescue:GND-power #PWR0107
 U 1 1 5E866CA5
 P 1000 1000
 F 0 "#PWR0107" H 1000 750 50  0001 C CNN
@@ -50,7 +49,7 @@ Wire Wire Line
 Text GLabel 1200 1350 3    50   Input ~ 0
 SCK_IN
 $Comp
-L Connector_Generic:Conn_01x08 INPUT_CONN1
+L evoke-rescue:Conn_01x08-Connector_Generic INPUT_CONN1
 U 1 1 5E8496EF
 P 1300 800
 F 0 "INPUT_CONN1" V 1264 312 50  0000 R CNN
@@ -63,7 +62,7 @@ $EndComp
 Text GLabel 1100 1350 3    50   Input ~ 0
 SDIN_IN
 $Comp
-L Connector_Generic:Conn_01x30 LCD_CONN1
+L evoke-rescue:Conn_01x30-Connector_Generic LCD_CONN1
 U 1 1 5EA08ED1
 P 3000 4800
 F 0 "LCD_CONN1" V 3217 4746 50  0000 C CNN
@@ -74,7 +73,7 @@ F 3 "~" H 3000 4800 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L power:+3V3 #PWR0106
+L evoke-rescue:+3V3-power #PWR0106
 U 1 1 5E96F3E2
 P 1600 1400
 F 0 "#PWR0106" H 1600 1250 50  0001 C CNN
@@ -137,7 +136,7 @@ SPI1_RST
 Text Notes 2800 4050 0    50   ~ 0
 SPI2 bus MASTER mode -> LCD/OLED
 $Comp
-L power:+3V3 #PWR0109
+L evoke-rescue:+3V3-power #PWR0109
 U 1 1 5E9A3581
 P 5750 950
 F 0 "#PWR0109" H 5750 800 50  0001 C CNN
@@ -148,7 +147,7 @@ F 3 "" H 5750 950 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR0110
+L evoke-rescue:GND-power #PWR0110
 U 1 1 5E9AC493
 P 5700 4400
 F 0 "#PWR0110" H 5700 4150 50  0001 C CNN
@@ -160,7 +159,7 @@ F 3 "" H 5700 4400 50  0001 C CNN
 $EndComp
 Connection ~ 5700 4400
 $Comp
-L Device:R R1
+L evoke-rescue:R-Device R1
 U 1 1 5E9AECB8
 P 4650 1800
 F 0 "R1" H 4580 1754 50  0000 R CNN
@@ -176,7 +175,7 @@ Wire Wire Line
 Text GLabel 800  -150 0    50   Input ~ 0
 BOOT0
 $Comp
-L power:GND #PWR0111
+L evoke-rescue:GND-power #PWR0111
 U 1 1 5E9C3D8B
 P 4350 1800
 F 0 "#PWR0111" H 4350 1550 50  0001 C CNN
@@ -187,7 +186,7 @@ F 3 "" H 4350 1800 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C C9
+L evoke-rescue:C-Device C9
 U 1 1 5E9CF40C
 P 4650 1600
 F 0 "C9" V 4398 1600 50  0000 C CNN
@@ -301,7 +300,7 @@ Wire Wire Line
 Wire Wire Line
 	1600 5000 1600 5300
 $Comp
-L power:GND #PWR0101
+L evoke-rescue:GND-power #PWR0101
 U 1 1 5EAB5C92
 P 1600 5300
 F 0 "#PWR0101" H 1600 5050 50  0001 C CNN
@@ -312,7 +311,7 @@ F 3 "" H 1600 5300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR0102
+L evoke-rescue:GND-power #PWR0102
 U 1 1 5EAB6769
 P 3600 5250
 F 0 "#PWR0102" H 3600 5000 50  0001 C CNN
@@ -335,7 +334,7 @@ LCD_RST
 Text GLabel 3200 5300 3    50   Input ~ 0
 LCD_CS
 $Comp
-L power:GND #PWR0103
+L evoke-rescue:GND-power #PWR0103
 U 1 1 5EABAA37
 P 3400 5250
 F 0 "#PWR0103" H 3400 5000 50  0001 C CNN
@@ -346,7 +345,7 @@ F 3 "" H 3400 5250 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:+3V3 #PWR0104
+L evoke-rescue:+3V3-power #PWR0104
 U 1 1 5EABC207
 P 3500 5250
 F 0 "#PWR0104" H 3500 5100 50  0001 C CNN
@@ -357,7 +356,7 @@ F 3 "" H 3500 5250 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:+3V3 #PWR0105
+L evoke-rescue:+3V3-power #PWR0105
 U 1 1 5EABCA46
 P 4200 5250
 F 0 "#PWR0105" H 4200 5100 50  0001 C CNN
@@ -368,7 +367,7 @@ F 3 "" H 4200 5250 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:R R2
+L evoke-rescue:R-Device R2
 U 1 1 5EABCFCA
 P 1900 5150
 F 0 "R2" H 1970 5196 50  0000 L CNN
@@ -380,7 +379,7 @@ F 4 "C26110" H 1900 5150 50  0001 C CNN "LCSC"
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR0108
+L evoke-rescue:GND-power #PWR0108
 U 1 1 5EABD732
 P 1800 6050
 F 0 "#PWR0108" H 1800 5800 50  0001 C CNN
@@ -391,7 +390,7 @@ F 3 "" H 1800 6050 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:CP C1
+L evoke-rescue:CP-Device C1
 U 1 1 5EABDE1F
 P 1800 5900
 F 0 "C1" H 1918 5946 50  0000 L CNN
@@ -403,7 +402,7 @@ F 4 " C7171" H 1800 5900 50  0001 C CNN "LCSC"
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR0116
+L evoke-rescue:GND-power #PWR0116
 U 1 1 5EAC0D2A
 P 2200 5300
 F 0 "#PWR0116" H 2200 5050 50  0001 C CNN
@@ -432,7 +431,7 @@ Wire Wire Line
 Wire Wire Line
 	2800 5300 2850 5300
 $Comp
-L power:GND #PWR0117
+L evoke-rescue:GND-power #PWR0117
 U 1 1 5EAD237C
 P 2850 5300
 F 0 "#PWR0117" H 2850 5050 50  0001 C CNN
@@ -448,7 +447,7 @@ Wire Wire Line
 Wire Wire Line
 	4400 5250 4450 5250
 $Comp
-L power:GND #PWR0118
+L evoke-rescue:GND-power #PWR0118
 U 1 1 5EAD4917
 P 4450 5250
 F 0 "#PWR0118" H 4450 5000 50  0001 C CNN
@@ -472,7 +471,7 @@ Wire Wire Line
 	5650 4400 5550 4400
 Connection ~ 5650 4400
 $Comp
-L MCU_ST_STM32F1:STM32F103C8Tx U1
+L evoke-rescue:STM32F103C8Tx-MCU_ST_STM32F1 U1
 U 1 1 5E980D42
 P 5750 2900
 F 0 "U1" H 5700 1311 50  0000 C CNN
@@ -505,7 +504,7 @@ Wire Wire Line
 Wire Wire Line
 	5750 1400 5750 950 
 $Comp
-L Device:CP C2
+L evoke-rescue:CP-Device C2
 U 1 1 5EAE362E
 P 5250 1150
 F 0 "C2" H 5368 1196 50  0000 L CNN
@@ -522,7 +521,7 @@ Wire Wire Line
 	5250 950  5250 1000
 Connection ~ 5550 950 
 $Comp
-L power:GND #PWR0119
+L evoke-rescue:GND-power #PWR0119
 U 1 1 5EAE67A2
 P 5250 1300
 F 0 "#PWR0119" H 5250 1050 50  0001 C CNN
@@ -533,7 +532,7 @@ F 3 "" H 5250 1300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C C3
+L evoke-rescue:C-Device C3
 U 1 1 5EAE6D38
 P 6150 1150
 F 0 "C3" H 6265 1196 50  0000 L CNN
@@ -545,7 +544,7 @@ F 4 "C49678" H 6150 1150 50  0001 C CNN "LCSC"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C C4
+L evoke-rescue:C-Device C4
 U 1 1 5EAE707A
 P 6400 1150
 F 0 "C4" H 6515 1196 50  0000 L CNN
@@ -557,7 +556,7 @@ F 4 "C49678" H 6400 1150 50  0001 C CNN "LCSC"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C C5
+L evoke-rescue:C-Device C5
 U 1 1 5EAE73B3
 P 6650 1150
 F 0 "C5" H 6765 1196 50  0000 L CNN
@@ -569,7 +568,7 @@ F 4 "C49678" H 6650 1150 50  0001 C CNN "LCSC"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C C6
+L evoke-rescue:C-Device C6
 U 1 1 5EAE7721
 P 6850 1150
 F 0 "C6" H 6965 1196 50  0000 L CNN
@@ -601,7 +600,7 @@ Wire Wire Line
 	6850 950  6850 1000
 Connection ~ 6650 950 
 $Comp
-L Device:C C7
+L evoke-rescue:C-Device C7
 U 1 1 5EAF1488
 P 7050 1150
 F 0 "C7" H 7165 1196 50  0000 L CNN
@@ -629,7 +628,7 @@ Wire Wire Line
 	6400 1300 6150 1300
 Connection ~ 6400 1300
 $Comp
-L power:GND #PWR0120
+L evoke-rescue:GND-power #PWR0120
 U 1 1 5EB009D3
 P 6550 1300
 F 0 "#PWR0120" H 6550 1050 50  0001 C CNN
@@ -643,7 +642,7 @@ Connection ~ 6550 1300
 Wire Wire Line
 	6550 1300 6400 1300
 $Comp
-L Device:C C8
+L evoke-rescue:C-Device C8
 U 1 1 5EB00D54
 P 7250 1150
 F 0 "C8" H 7365 1196 50  0000 L CNN
@@ -663,7 +662,7 @@ Wire Wire Line
 	7050 1300 7250 1300
 Connection ~ 7050 1300
 $Comp
-L power:GND #PWR0121
+L evoke-rescue:GND-power #PWR0121
 U 1 1 5EB07499
 P 4350 2900
 F 0 "#PWR0121" H 4350 2650 50  0001 C CNN
@@ -674,7 +673,7 @@ F 3 "" H 4350 2900 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C C10
+L evoke-rescue:C-Device C10
 U 1 1 5EA8CE78
 P 2150 5900
 F 0 "C10" H 2265 5946 50  0000 L CNN
@@ -708,7 +707,7 @@ Wire Wire Line
 Wire Wire Line
 	9450 2250 9450 2200
 $Comp
-L power:GND #PWR0112
+L evoke-rescue:GND-power #PWR0112
 U 1 1 5EAB7002
 P 9850 2150
 F 0 "#PWR0112" H 9850 1900 50  0001 C CNN
@@ -719,7 +718,7 @@ F 3 "" H 9850 2150 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:+3V3 #PWR0113
+L evoke-rescue:+3V3-power #PWR0113
 U 1 1 5EAB778F
 P 9450 2200
 F 0 "#PWR0113" H 9450 2050 50  0001 C CNN
@@ -743,7 +742,7 @@ Wire Wire Line
 Text GLabel 4900 1600 1    50   Input ~ 0
 RESET
 $Comp
-L Connector_Generic:Conn_01x05 ST_LINK1
+L evoke-rescue:Conn_01x05-Connector_Generic ST_LINK1
 U 1 1 5EAC76C7
 P 10200 2150
 F 0 "ST_LINK1" H 10280 2192 50  0000 L CNN
@@ -754,7 +753,7 @@ F 3 "~" H 10200 2150 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:R R3
+L evoke-rescue:R-Device R3
 U 1 1 5EACB92E
 P 4600 2900
 F 0 "R3" V 4393 2900 50  0000 C CNN
@@ -769,4 +768,15 @@ Wire Wire Line
 	4350 2900 4450 2900
 Wire Wire Line
 	9850 2150 10000 2150
+$Comp
+L Device:Q_NMOS_GSD Q1
+U 1 1 5EC74373
+P 5750 6100
+F 0 "Q1" H 5955 6146 50  0000 L CNN
+F 1 "AO3400A" H 5955 6055 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23" H 5950 6200 50  0001 C CNN
+F 3 "~" H 5750 6100 50  0001 C CNN
+	1    5750 6100
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
