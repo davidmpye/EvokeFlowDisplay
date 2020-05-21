@@ -19,6 +19,7 @@
 
 #include "ssd1305.h"
 
+#define SSD1305_INIT_CMD_LEN 30
 //This is our default block of 'init commands'
 uint8_t SSD1305_init_cmds [] = {
 	0xAE,   //Display OFF
@@ -89,7 +90,7 @@ void SSD1305_init() {
     // Post reset pause
     for (int i=0; i<5000; ++i) __asm__("NOP");
     // Send the init string   
-    for (int i=0; i<30; ++i)  {
+    for (int i=0; i<SSD1305_INIT_CMD_LEN; ++i)  {
     	SSD1305_sendByte(true, SSD1305_init_cmds[i]);
     }
 }
