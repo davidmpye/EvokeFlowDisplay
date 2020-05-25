@@ -29,14 +29,30 @@
 
 //Choose your output display type here - OLED or LCD
 #define NT7538
-#define SSD1305
+//#define SSD1305
 
 #if defined NT7538
 
-#elif defined SSD1305 SSD1305_init
+#define DISPLAY_INIT NT7538_init
+#define DISPLAY_PREDMATRANSFER NT7538_preDmaTransfer
+#define DISPLAY_POSTDMATRANSFER NT7538_postDmaTransfer
+#define DISPLAY_ENABLEDISPLAY NT7538_enableDisplay
+#define DISPLAY_SETBRIGHTNESS NT7538_setBrightness
+#define DISPLAY_SENDCMDBLOCK NT7538_sendCmdBlock
+
+#elif defined SSD1305 
+
+#define DISPLAY_INIT SSD1305_init
+#define DISPLAY_PREDMATRANSFER SSD1305_preDmaTransfer
+#define DISPLAY_POSTDMATRANSFER SSD1305_postDmaTransfer
+#define DISPLAY_ENABLEDISPLAY SSD1305_enableDisplay
+#define DISPLAY_SETBRIGHTNESS SSD1305_setBrightness
+#define DISPLAY_SENDCMDBLOCK SSD1305_sendCmdBlock
 
 #else
+
 #error You must define either NT7538 or SSD1305 as an output display.
+
 #endif
 
 
@@ -193,7 +209,7 @@ void initDMA() {
 void dmaTransferToScreen(uint8_t page) {
 	dmaComplete = false;
 	//Get the display ready to receive the data
-	SSD1305_preDmaTransfer(page);
+	DISPLAY_PREDMATRANSFER (page);
 
 	//set starting offset of transfer
 	dma_set_memory_address(DMA1, DMA_CHANNEL5, (uint32_t)&framebuffer[128*page]);
@@ -225,7 +241,7 @@ void dma1_channel5_isr() {
 			//Wait for transfer to finish
 		}
 
-		SSD1305_postDmaTransfer(0); //Page irrelevant.
+		DISPLAY_POSTDMATRANSFER (0); //Page irrelevant.
 
 	for (int i=0; i<1000; ++i) __asm__("NOP");
 
@@ -264,11 +280,11 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 
 	if (len == 1) {
 		if (bytes[0] == 0xAF) {
-  			SSD1305_enableDisplay(true);
+  			DISPLAY_ENABLEDISPLAY(true);
 			displayOn = true;
 		}
 		else if (bytes[0] == 0xAE) {
-			SSD1305_enableDisplay(false);
+			DISPLAY_ENABLEDISPLAY(false);
 			displayOn = true;
 		}
 		else if ( (bytes[0] & 0xF0) == 0xB0) {
@@ -340,7 +356,7 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 					brightness = 10;
 					break;
 			}
-			SSD1305_setBrightness(brightness);
+			DISPLAY_SETBRIGHTNESS(brightness);
 		}
 		else if (bytes[0] == 0xDB) {
 			//We need to store this value to work out what the brightness is as levels 1 and 0 both have the 
@@ -496,7 +512,7 @@ void init() {
    	gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO10 | GPIO11 | GPIO12);
    	gpio_set(OUT_GPIO, OUT_CS_PIN);
 
-	SSD1305_init();
+	DISPLAY_INIT();
 
 	//Mark all pages as changed
 	for (int i=0; i<8; ++i) {
@@ -527,7 +543,7 @@ int main() {
 				}
 			}
 			//This doesnt bother to use DMA as it's quite short and the overhead isnt worth it!
-			SSD1305_sendCmdBlock();
+			DISPLAY_SENDCMDBLOCK();
 			for (int i=0; i<50; ++i) __asm__("NOP");
     	}
 	}

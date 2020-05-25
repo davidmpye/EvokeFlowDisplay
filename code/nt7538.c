@@ -19,9 +19,9 @@
 
 #include "nt7538.h"
 
-#define ND7538_INIT_CMD_LEN 10
+#define NT7538_INIT_CMD_LEN 10
 //This is our default block of 'init commands'
-uint8_t ND7538_init_cmds [] = {
+uint8_t NT7538_init_cmds [] = {
 //clear adc
 0xA0,
 //set shl
@@ -64,7 +64,7 @@ void NT7538_init() {
     // Post reset pause
     for (int i=0; i<5000; ++i) __asm__("NOP");
     // Send the init string   
-    for (int i=0; i<ND7538_INIT_CMD_LEN; ++i)  {
+    for (int i=0; i<NT7538_INIT_CMD_LEN; ++i)  {
     	NT7538_sendByte(true, NT7538_init_cmds[i]);
     }
 }
