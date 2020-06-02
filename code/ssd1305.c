@@ -54,7 +54,7 @@ uint8_t SSD1305_init_cmds [] = {
 	0xdb,   //VComH select
 	0x34,   //0.77x VCC (Default)
 	0xa6,   //Normal, non inverted display
-	0xa4,//fixme   //Display on - 'follows RAM'
+	0xa4,   //Display ALL on 0xa5, - 'follows RAM' - ie normal 0xa4
 	//if we wanted to use horizontal addressing mode, we'd add:
         //0x20, 0x00,
         //default is page addressing mode, which is 0x22
