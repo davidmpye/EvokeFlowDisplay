@@ -28,8 +28,8 @@
 #include "pins.h"
 
 //Choose your output display type here - OLED or LCD
-#define NT7538
-//#define SSD1305
+//#define NT7538
+#define SSD1305
 
 #if defined NT7538
 

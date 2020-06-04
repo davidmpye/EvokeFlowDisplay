@@ -708,17 +708,6 @@ Wire Wire Line
 	5400 6550 5400 6400
 Wire Wire Line
 	5100 6100 4950 6100
-$Comp
-L Connector:Conn_01x02_Male J1
-U 1 1 5EC97737
-P 5650 5650
-F 0 "J1" H 5758 5831 50  0000 C CNN
-F 1 "Conn_01x02_Male" H 5758 5740 50  0000 C CNN
-F 2 "" H 5650 5650 50  0001 C CNN
-F 3 "~" H 5650 5650 50  0001 C CNN
-	1    5650 5650
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	5850 5750 5850 5900
 Wire Wire Line
@@ -1000,5 +989,16 @@ F 3 "~" H 4100 5250 50  0001 C CNN
 F 4 "C28323" H 4100 5250 50  0001 C CNN "LCSC"
 	1    4100 5250
 	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x02_Male J1
+U 1 1 5EC97737
+P 6050 5750
+F 0 "J1" H 6158 5931 50  0000 C CNN
+F 1 "Conn_01x02_Male" H 6158 5840 50  0000 C CNN
+F 2 "Connector_JST:JST_PH_B2B-PH-SM4-TB_1x02-1MP_P2.00mm_Vertical" H 6050 5750 50  0001 C CNN
+F 3 "~" H 6050 5750 50  0001 C CNN
+	1    6050 5750
+	-1   0    0    1   
 $EndComp
 $EndSCHEMATC
