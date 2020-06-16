@@ -365,9 +365,6 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 		}
 	}
 	
-	/*
-	
-	
 	else {
 #ifdef USB_DEBUG
         //It is an unhandled command. Let's print it
@@ -384,7 +381,7 @@ void handleCommand(uint8_t *bytes, uint8_t len) {
 			}
 		}
 #endif
-	}*/	
+	}	
 }
 
 
@@ -490,8 +487,10 @@ void usartSend(char *string) {
 }
 
 void init() {
-    rcc_clock_setup_in_hse_8mhz_out_72mhz();
-
+    	//External (crystal):
+	//rcc_clock_setup_in_hse_8mhz_out_72mhz();
+	//Internal:
+	rcc_clock_setup_in_hsi_out_64mhz();
 	//GPIO peripheral clocks on here
 	//Other peripheral clocks (eg USART) turned on by their own inits.
 	rcc_periph_clock_enable(RCC_GPIOA);
