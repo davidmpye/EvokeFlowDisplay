@@ -256,7 +256,7 @@ void spi1_isr() {
 	//Hopefully this has gone off because a byte has arrived..
 	uint8_t byte = spi_read(SPI1);
 	//gpio11 high = data
-	if ( !gpio_get(GPIOA, GPIO11)) {
+	if ( !gpio_get(GPIOA, GPIO2)) {
 		handleCmdByte(byte);
 	}
 	else handleDataByte(byte);
@@ -504,8 +504,9 @@ void init() {
     initSPI();
 	initDMA();
 
-   	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,  GPIO11);
-	gpio_set(GPIOA, GPIO11);//pullup
+	//Data/cmd pin
+   	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,  GPIO2);
+	gpio_set(GPIOA, GPIO2);//pullup
 
    	//10 = D/C, B11 = RST, 12 is driven as CS
    	gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO10 | GPIO11 | GPIO12);
