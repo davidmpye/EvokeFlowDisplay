@@ -26,6 +26,12 @@
 
 //#define VERTFLIP
 
+
+
+//Note VCC supplied by radio is 14.55volts.
+//1.15MOhm therefore should be the IREF current resistor
+//The radio seems to use 1.5MOHm tho... 
+
 void SSD1305_init(void);
 void SSD1305_setBrightness(uint8_t);
 void SSD1305_enableDisplay(bool); //Display on or off.

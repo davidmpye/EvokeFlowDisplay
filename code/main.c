@@ -55,11 +55,6 @@
 
 #endif
 
-
-//Note VCC supplied by radio is 14.55volts.
-//1.15MOhm therefore should be the IREF current resistor
-//The radio seems to use 1.5MOHm tho... 
-
 //#define USB_DEBUG
 
 //Our framebuffer
