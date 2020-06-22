@@ -62,17 +62,6 @@ $EndComp
 Text GLabel 1100 1350 3    50   Input ~ 0
 SDIN_IN
 $Comp
-L evoke-rescue:Conn_01x30-Connector_Generic-evoke-rescue LCD_CONN1
-U 1 1 5EA08ED1
-P 2750 4550
-F 0 "LCD_CONN1" V 2967 4496 50  0000 C CNN
-F 1 "Conn_01x30" V 2876 4496 50  0000 C CNN
-F 2 "Connector_FFC-FPC:Hirose_FH12-30S-0.5SH_1x30-1MP_P0.50mm_Horizontal" H 2750 4550 50  0001 C CNN
-F 3 "~" H 2750 4550 50  0001 C CNN
-	1    2750 4550
-	0    -1   -1   0   
-$EndComp
-$Comp
 L evoke-rescue:+3V3-power-evoke-rescue #PWR0106
 U 1 1 5E96F3E2
 P 1600 1400
@@ -1049,9 +1038,10 @@ L evoke-rescue:R-Device-evoke-rescue R2
 U 1 1 5EEC6AFE
 P 5050 6650
 F 0 "R2" V 4843 6650 50  0000 C CNN
-F 1 "500R" V 4934 6650 50  0000 C CNN
+F 1 "1K" V 4934 6650 50  0000 C CNN
 F 2 "Resistor_SMD:R_0805_2012Metric" V 4980 6650 50  0001 C CNN
 F 3 "" H 5050 6650 50  0001 C CNN
+F 4 "C17513" V 5050 6650 50  0001 C CNN "LCSC"
 	1    5050 6650
 	0    1    1    0   
 $EndComp
@@ -1063,6 +1053,7 @@ F 0 "R4" H 5270 6846 50  0000 L CNN
 F 1 "200K" H 5270 6755 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric" V 5130 6800 50  0001 C CNN
 F 3 "" H 5200 6800 50  0001 C CNN
+F 4 "C17539" H 5200 6800 50  0001 C CNN "LCSC"
 	1    5200 6800
 	1    0    0    -1  
 $EndComp
@@ -1204,4 +1195,15 @@ Wire Wire Line
 Wire Wire Line
 	1500 4750 1550 4750
 Connection ~ 1500 4750
+$Comp
+L evoke-rescue:Conn_01x30-Connector_Generic-evoke-rescue LCD_CONN1
+U 1 1 5EA08ED1
+P 2850 4550
+F 0 "LCD_CONN1" V 3067 4496 50  0000 C CNN
+F 1 "Conn_01x30" V 2976 4496 50  0000 C CNN
+F 2 "Connector_FFC-FPC:Hirose_FH12-30S-0.5SH_1x30-1MP_P0.50mm_Horizontal" H 2850 4550 50  0001 C CNN
+F 3 "~" H 2850 4550 50  0001 C CNN
+	1    2850 4550
+	0    1    -1   0   
+$EndComp
 $EndSCHEMATC
