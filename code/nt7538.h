@@ -23,6 +23,9 @@
 #include "pins.h"
 #include "libopencm3/stm32/spi.h"
 #include "libopencm3/stm32/gpio.h"
+#include <libopencm3/stm32/timer.h>
+#include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/adc.h>
 
 //#define VERTFLIP
 void NT7538_init(void);
@@ -37,6 +40,10 @@ void NT7538_preDmaTransfer(uint8_t page); //Send the page select commands pre DM
 void NT7538_postDmaTransfer(uint8_t page); //Send the post block transfer commands (if any), and toggle CS/D_C pins as required.
 
 void NT7538_sendCmdBlock();
+
+
+uint8_t _brightness;
+uint16_t _contrast;
 #endif
 
 

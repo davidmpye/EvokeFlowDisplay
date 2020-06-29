@@ -19,6 +19,7 @@
 
 #include "nt7538.h"
 
+
 #define NT7538_INIT_CMD_LEN 10
 //This is our default block of 'init commands'
 uint8_t NT7538_init_cmds [] = {
@@ -37,15 +38,37 @@ uint8_t NT7538_init_cmds [] = {
 //Contrast register range 0-0x3F
 0x26,
 0xa6,//Normal segment mapping (0xa7 = reverse)
+0xa6,
 ////initial display line in GDRAM
 0x40,
 //display on
 0xAF,
 };
 
-#define CMDBLOCK_LEN 0
-#define DISPLAY_STATE_OFFSET 4
+#define CMDBLOCK_LEN 10
+#define CONTRAST_OFFSET 1
+#define STATUS_OFFSET 9
 uint8_t NT7538_cmdBlock[] = {
+//Contrast command
+0x81,
+//Contrast val
+0x36,
+//Clear ADC
+0xA0,
+//set shl
+0xC8,
+//clear bias
+0xA2,
+//power control 0x07
+0x2F,
+//reg resistor select 0x07
+0x27,
+//Normal segment mapping (0xa7 = reverse)
+0xa6,
+////initial display line in GDRAM
+0x40,
+//Screen status command
+0xAF
 };
 
 void NT7538_init() {
@@ -67,6 +90,43 @@ void NT7538_init() {
     for (int i=0; i<NT7538_INIT_CMD_LEN; ++i)  {
     	NT7538_sendByte(true, NT7538_init_cmds[i]);
     }
+
+    //Set up the timer for the PWM backlight
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_TIM3);
+    gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ,
+    	GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
+	GPIO_TIM3_CH4);
+    rcc_periph_clock_enable(RCC_TIM3);
+    timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_CENTER_1,
+    	TIM_CR1_DIR_UP);
+    timer_enable_preload(TIM3);
+    timer_set_prescaler(TIM3, 64); //1MHz	 
+         timer_set_period(TIM3, 500);
+	 timer_set_repetition_counter(TIM3, 0);
+	  timer_continuous_mode(TIM3); 
+	 timer_set_oc_mode(TIM3, TIM_OC4, TIM_OCM_PWM2);
+         timer_enable_oc_output(TIM3, TIM_OC4);
+         timer_set_oc_value(TIM3, TIM_OC4, 490);
+         timer_enable_counter(TIM3);
+
+
+	 //Set up the ADC for the contrast potentiometer
+	 gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0);
+	 rcc_periph_clock_enable(RCC_ADC1);
+	 adc_power_off(ADC1);
+	rcc_periph_reset_pulse(RST_ADC1);
+	rcc_set_adcpre(RCC_CFGR_ADCPRE_PCLK2_DIV2);
+	adc_set_dual_mode(ADC_CR1_DUALMOD_IND);
+	adc_disable_scan_mode(ADC1);
+	adc_set_single_conversion_mode(ADC1);
+	adc_set_sample_time(ADC1, ADC_CHANNEL8, ADC_SMPR_SMP_1DOT5CYC);
+	uint8_t channels[] = { ADC_CHANNEL8};
+	adc_set_regular_sequence(ADC1, 1, channels);
+	adc_enable_external_trigger_regular(ADC1, ADC_CR2_EXTSEL_SWSTART);
+	adc_power_on(ADC1);
+	adc_reset_calibration(ADC1);
+	adc_calibrate(ADC1);
 }
 
 void NT7538_sendByte(bool cmd, uint8_t b) {
@@ -97,17 +157,21 @@ void NT7538_sendByte(bool cmd, uint8_t b) {
 }
 
 void NT7538_setBrightness(uint8_t brightness) {
-	//ValA = 0x81 arg, valB = 0xDB arg
-    //Data captured from radio's own 'brighness' values.
-	uint8_t valA, valB;
-	switch (brightness) {
-	}
+    //Data captured from radio's own 'brightness' values.
+     _brightness = brightness;
+     timer_set_oc_value(TIM3, TIM_OC4, 500 - (_brightness*50)+20);
 }
 
 void NT7538_enableDisplay(bool state) {
-    if (state) {
+    	if (state) {
+    		NT7538_cmdBlock[STATUS_OFFSET]  = 0xAF;
+		//Re-enable backlight
+	 	timer_set_oc_mode(TIM3, TIM_OC4, TIM_OCM_PWM2);
 	}
 	else {
+    		NT7538_cmdBlock[STATUS_OFFSET]  = 0xAE;
+		//Backlight off
+	 	timer_set_oc_mode(TIM3, TIM_OC4, TIM_OCM_FORCE_LOW);
 	}
 }
 
@@ -148,7 +212,18 @@ void NT7538_postDmaTransfer(uint8_t page) {
 }
 
 void NT7538_sendCmdBlock() {
- 	for (int i=0; i<CMDBLOCK_LEN; ++i)  {
-    	NT7538_sendByte(true, NT7538_cmdBlock[i]);
+	//PB0 is contrast pot.
+	adc_start_conversion_regular(ADC1);
+	while (! adc_eoc(ADC1));
+	uint16_t contrastval = adc_read_regular(ADC1);	 
+	//Scale contrast val.
+	//0 to 0x3f
+	//
+	//
+	contrastval  /= 0x3F;
+	NT7538_cmdBlock[CONTRAST_OFFSET] = 0xFF & contrastval;
+	
+	for (int i=0; i<CMDBLOCK_LEN; ++i)  {
+    		NT7538_sendByte(true, NT7538_cmdBlock[i]);
  	}
 }
