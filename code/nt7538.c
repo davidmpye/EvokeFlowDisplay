@@ -52,7 +52,7 @@ uint8_t NT7538_cmdBlock[] = {
 //Contrast command
 0x81,
 //Contrast val
-0x36,
+0x26, //default value
 //Clear ADC
 0xA0,
 //set shl
@@ -110,7 +110,7 @@ void NT7538_init() {
          timer_set_oc_value(TIM3, TIM_OC4, 490);
          timer_enable_counter(TIM3);
 
-
+#ifdef ENABLE_CONTRAST_POT
 	 //Set up the ADC for the contrast potentiometer
 	 gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0);
 	 rcc_periph_clock_enable(RCC_ADC1);
@@ -127,6 +127,7 @@ void NT7538_init() {
 	adc_power_on(ADC1);
 	adc_reset_calibration(ADC1);
 	adc_calibrate(ADC1);
+#endif
 }
 
 void NT7538_sendByte(bool cmd, uint8_t b) {
@@ -158,8 +159,7 @@ void NT7538_sendByte(bool cmd, uint8_t b) {
 
 void NT7538_setBrightness(uint8_t brightness) {
     //Data captured from radio's own 'brightness' values.
-     _brightness = brightness;
-     timer_set_oc_value(TIM3, TIM_OC4, 500 - (_brightness*50)+20);
+     timer_set_oc_value(TIM3, TIM_OC4, 500 - (brightness*50)+20);
 }
 
 void NT7538_enableDisplay(bool state) {
@@ -212,16 +212,16 @@ void NT7538_postDmaTransfer(uint8_t page) {
 }
 
 void NT7538_sendCmdBlock() {
-	//PB0 is contrast pot.
+//If fitted, we look up the contrast pot value each time a command block is sent
+#ifdef ENABLE_CONTRAST_POT
 	adc_start_conversion_regular(ADC1);
 	while (! adc_eoc(ADC1));
 	uint16_t contrastval = adc_read_regular(ADC1);	 
 	//Scale contrast val.
 	//0 to 0x3f
-	//
-	//
 	contrastval  /= 0x3F;
 	NT7538_cmdBlock[CONTRAST_OFFSET] = 0xFF & contrastval;
+#endif
 	
 	for (int i=0; i<CMDBLOCK_LEN; ++i)  {
     		NT7538_sendByte(true, NT7538_cmdBlock[i]);

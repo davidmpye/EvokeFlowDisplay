@@ -27,7 +27,8 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/adc.h>
 
-//#define VERTFLIP
+#define ENABLE_CONTRAST_POT
+
 void NT7538_init(void);
 void NT7538_setBrightness(uint8_t);
 void NT7538_enableDisplay(bool); //Display on or off.
@@ -41,9 +42,6 @@ void NT7538_postDmaTransfer(uint8_t page); //Send the post block transfer comman
 
 void NT7538_sendCmdBlock();
 
-
-uint8_t _brightness;
-uint16_t _contrast;
 #endif
 
 
