@@ -107,7 +107,7 @@ void NT7538_init() {
 	  timer_continuous_mode(TIM3); 
 	 timer_set_oc_mode(TIM3, TIM_OC4, TIM_OCM_PWM2);
          timer_enable_oc_output(TIM3, TIM_OC4);
-         timer_set_oc_value(TIM3, TIM_OC4, 490);
+         timer_set_oc_value(TIM3, TIM_OC4, 520);  //Backlight off initially
          timer_enable_counter(TIM3);
 
 #ifdef ENABLE_CONTRAST_POT
