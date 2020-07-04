@@ -107,8 +107,10 @@ void NT7538_init() {
 	  timer_continuous_mode(TIM3); 
 	 timer_set_oc_mode(TIM3, TIM_OC4, TIM_OCM_PWM2);
          timer_enable_oc_output(TIM3, TIM_OC4);
-         timer_set_oc_value(TIM3, TIM_OC4, 520);  //Backlight off initially
+         timer_set_oc_value(TIM3, TIM_OC4, 490);  //Backlight off initially
          timer_enable_counter(TIM3);
+	 //This turns off the PWM output initially, until the display is 'turned on' by the radio as it inits	
+	 timer_set_oc_mode(TIM3, TIM_OC4, TIM_OCM_FORCE_LOW);
 
 #ifdef ENABLE_CONTRAST_POT
 	 //Set up the ADC for the contrast potentiometer
