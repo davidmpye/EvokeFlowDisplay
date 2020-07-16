@@ -52,7 +52,7 @@ uint8_t NT7538_cmdBlock[] = {
 //Contrast command
 0x81,
 //Contrast val
-0x26, //default value
+0x29, //default value
 //Clear ADC
 0xA0,
 //set shl
@@ -101,7 +101,7 @@ void NT7538_init() {
     timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_CENTER_1,
     	TIM_CR1_DIR_UP);
     timer_enable_preload(TIM3);
-    timer_set_prescaler(TIM3, 64); //1MHz	 
+    timer_set_prescaler(TIM3, 4);  //64mhz /  = 16MHz
          timer_set_period(TIM3, 500);
 	 timer_set_repetition_counter(TIM3, 0);
 	  timer_continuous_mode(TIM3); 
@@ -130,6 +130,7 @@ void NT7538_init() {
 	adc_reset_calibration(ADC1);
 	adc_calibrate(ADC1);
 #endif
+
 }
 
 void NT7538_sendByte(bool cmd, uint8_t b) {

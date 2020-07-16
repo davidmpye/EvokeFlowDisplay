@@ -27,7 +27,7 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/adc.h>
 
-#define ENABLE_CONTRAST_POT
+//#define ENABLE_CONTRAST_POT
 
 void NT7538_init(void);
 void NT7538_setBrightness(uint8_t);
