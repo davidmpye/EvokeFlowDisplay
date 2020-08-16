@@ -3,7 +3,7 @@ outer_x = 60;
 outer_y = 72;
 
 aperture_x = 50;
-aperture_y = 69.5;
+aperture_y = 69.25;
 
 height = 4;
 
