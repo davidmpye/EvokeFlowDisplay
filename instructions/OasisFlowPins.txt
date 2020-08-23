@@ -1,0 +1,8 @@
+TP1 -> TP42 on daughter board underside
+TP2 -> TP39 on daughter board underside
+TP3 -> TP41 on daughter board underside
+TP4 -> TP43 on daughter board underside
+
+13V -> C90 side.
+3v3/gnd from C155 pins.
+
