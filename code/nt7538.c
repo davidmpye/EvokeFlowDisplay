@@ -20,6 +20,11 @@
 #include "nt7538.h"
 
 
+//Normal setting
+#define CONTRAST 0x26
+//If it's too dark:
+//#define CONTRAST 0x20
+
 #define NT7538_INIT_CMD_LEN 10
 //This is our default block of 'init commands'
 uint8_t NT7538_init_cmds [] = {
@@ -36,7 +41,7 @@ uint8_t NT7538_init_cmds [] = {
 //contrast control reg
 0x81,
 //Contrast register range 0-0x3F
-0x26,
+CONTRAST,
 0xa6,//Normal segment mapping (0xa7 = reverse)
 0xa6,
 ////initial display line in GDRAM
@@ -52,7 +57,7 @@ uint8_t NT7538_cmdBlock[] = {
 //Contrast command
 0x81,
 //Contrast val
-0x29, //default value
+CONTRAST, //default value
 //Clear ADC
 0xA0,
 //set shl
