@@ -38,7 +38,7 @@ uint8_t SSD1305_init_cmds [] = {
 	0xc8,
 #else
 	0xa0,
-	0xc0,
+	0xc0, # Change this to c8 if horizontal flip only needed
 #endif
 	0xda, 	//Hardware com pin configuration
 	0x12, 	//'alternative' com pin config, no left to right remap.
