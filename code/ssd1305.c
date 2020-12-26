@@ -38,7 +38,7 @@ uint8_t SSD1305_init_cmds [] = {
 	0xc8,
 #else
 	0xa0,
-	0xc0, # Change this to c8 if horizontal flip only needed
+	0xc0, // Change this to c8 if horizontal flip only needed
 #endif
 	0xda, 	//Hardware com pin configuration
 	0x12, 	//'alternative' com pin config, no left to right remap.
@@ -50,7 +50,7 @@ uint8_t SSD1305_init_cmds [] = {
 	0x82,	//Set brightness
 	0x80,   //Default brightness
 	0xd9,   //Set precharge period
-	0xf1,   //was f1 //F = phase 1, 1= phase 2
+	0xf1,   //was f1 //F = phase 1, 1= phase 2 - 3f is dimmer, but acceptably so
 	0xdb,   //VComH select
 	0x34,   //0.77x VCC (Default)
 	0xa6,   //Normal, non inverted display
@@ -61,15 +61,18 @@ uint8_t SSD1305_init_cmds [] = {
 	0xAF,   //Display on
 };
 
-#define CMDBLOCK_LEN 5
+#define CMDBLOCK_LEN 7
 #define BRIGHTNESS_81_OFFSET 1
 #define BRIGHTNESS_DB_OFFSET 3
-#define DISPLAY_STATE_OFFSET 4
+#define PRECHARGE_OFFSET 5
+#define DISPLAY_STATE_OFFSET 6
 uint8_t SSD1305_cmdBlock[] = {
 	0x81, //brightness
 	0xB0, //full
 	0xDB, //brightness
 	0xC3, //full,
+	0xD9, //precharge
+	0xF1, //normal brightness
 	0xAF, //display state
 };
 
@@ -96,7 +99,7 @@ void SSD1305_init() {
 }
 
 void SSD1305_sendByte(bool cmd, uint8_t b) {
-    //CS low
+    	//CS low
 	gpio_clear(GPIOB, OUT_CS_PIN);
 	
 	//Set data/command pin state
@@ -124,49 +127,59 @@ void SSD1305_sendByte(bool cmd, uint8_t b) {
 
 void SSD1305_setBrightness(uint8_t brightness) {
 	//ValA = 0x81 arg, valB = 0xDB arg
-    //Data captured from radio's own 'brighness' values.
+    	//Data captured from radio's own 'brighness' values.
 	uint8_t valA, valB;
 	switch (brightness) {
 		case 1:
 			valA = 0x00;
 			valB = 0x00;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0x31;
 			break;
 		case 2:
 			valA = 0x00;
 			valB = 0x08;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0x31;
 			break;
 		case 3:
 			valA = 0x10;
 			valB = 0x0C;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0x51;
 			break;
 		case 4:
 			valA = 0x20;
 			valB = 0x0C;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0x81;	
 			break;
 		case 5:
 			valA = 0x30;
 			valB = 0x24;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0xA1;	
 			break;
 		case 6:
 			valA = 0x40;
 			valB = 0x24;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0xF1;	
 			break;
 		case 7:
 			valA = 0x50;
 			valB = 0x2C;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0xF1;	
 			break;
 		case 8:
 			valA = 0x70;
 			valB = 0x34;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0xF1;	
 			break;
 		case 9:
 			valA = 0x80;
 			valB = 0x34;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0xF1;	
 			break;
 		case 10:
 		default:
 			valA = 0xB0;
 			valB = 0x3C;
+			SSD1305_cmdBlock[PRECHARGE_OFFSET] = 0xF1;	
 			break;
 	}
 	SSD1305_cmdBlock[BRIGHTNESS_81_OFFSET] = valA;
