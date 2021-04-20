@@ -15,5 +15,5 @@ Comment,Designator,Footprint,LCSC, LCSC
 "200K","R4","Resistor_SMD:R_0805_2012Metric","","C17539"
 "Conn_01x05","ST_LINK1","Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",""
 "TestPoint","TP1,TP2,TP3,TP4,TP5,TP6,TP7,TP8","TestPoint:TestPoint_Pad_D1.0mm",""
-"STM32F103C8Tx","U1","Package_QFP:LQFP-48_7x7mm_P0.5mm","","C8734"
+"GD32E230C8T6","U1","Package_QFP:LQFP-48_7x7mm_P0.5mm","","C380535"
 "100K","VR_CONTRAST1","Potentiometer_THT:Potentiometer_Vishay_T73YP_Vertical",""
