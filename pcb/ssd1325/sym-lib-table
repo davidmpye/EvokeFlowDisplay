@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name pureevolvenew-rescue)(type Legacy)(uri ${KIPRJMOD}/pureevolvenew-rescue.lib)(options "")(descr ""))
+  (lib (name evoke-rescue)(type Legacy)(uri ${KIPRJMOD}/evoke-rescue.lib)(options "")(descr ""))
+)
