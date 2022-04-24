@@ -72,6 +72,13 @@ translate([0,-5.25,0]) {
 
 //chops the bottom off.
 translate([52,-5,-0.1]) cube([100,100,100]);
+
+//for the f4...
+translate([42,-3,0]) #cube([12,10,10]);
+translate([42,65,0]) #cube([12,10,10]);
+
+
+
 }
 }
 
