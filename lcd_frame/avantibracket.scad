@@ -20,7 +20,7 @@ module mounting_lug(ht) {
         cylinder(d=6,h=ht);
         translate([6,0,0]) cylinder(d=6,h=ht);
        }
-       translate([0,0,3.5]) cylinder(d=5,h=10);
+       translate([0,0,3.5]) cylinder(d=8,h=10);
        translate([0,0,-1]) cylinder(d=2,h=10);
    }
 }
@@ -76,7 +76,7 @@ translate([52,-5,-0.1]) cube([100,100,100]);
 //for the f4...
 //translate([42,-3,0]) #cube([12,10,10]);
 //translate([42,65,0]) #cube([12,10,10]);
-translate([46,-10,0]) #cube([10,100,10]);
+translate([42,-10,0]) #cube([10,100,10]);
 
 
 
@@ -84,4 +84,41 @@ translate([46,-10,0]) #cube([10,100,10]);
 }
 
 
-main_bracket();
+//main_bracket();
+
+
+module button_ext() {
+    
+cylinder(d=3.5, h=9);
+}
+
+module pcb_extender(height) {
+    difference() {
+        cylinder(d=6, h=height);
+        cylinder(d=2, h=height+1);
+    }
+}
+
+//button_ext();
+/*pcb_extender(9);
+translate([7,7,0]) pcb_extender(9);
+
+translate([7,0,0]) pcb_extender(6);
+translate([0,7,0]) pcb_extender(6);
+
+*/
+
+pcb_extender(9);
+translate([7,7,0]) pcb_extender(9);
+translate([0,7,0]) pcb_extender(9);
+translate([7,0,0]) pcb_extender(9);
+
+translate([14,0,0]) {
+button_ext();
+translate([4,4,0]) button_ext();
+translate([0,4,0]) button_ext();
+translate([4,0,0]) button_ext();
+
+}
+
+
