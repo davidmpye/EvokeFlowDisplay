@@ -2,7 +2,7 @@ $fn=50;
 outer_x = 60;
 outer_y = 72;
 
-aperture_x = 50.3;
+aperture_x = 49.5;
 aperture_y = 69.6;
 
 height = 4;
@@ -21,7 +21,7 @@ module mounting_lug(ht) {
         translate([6,0,0]) cylinder(d=6,h=ht);
        }
        translate([0,0,3.5]) cylinder(d=5,h=10);
-       translate([0,0,-1]) cylinder(d=2,h=10);
+       translate([0,0,-1]) cylinder(d=2.5,h=10);
    }
 }
 
@@ -74,8 +74,8 @@ translate([0,-5.25,0]) {
 translate([52,-5,-0.1]) cube([100,100,100]);
 
 //for the f4...
-translate([42,-3,0]) #cube([12,10,10]);
-translate([42,65,0]) #cube([12,10,10]);
+//translate([42,-3,0]) #cube([12,10,10]);
+//translate([42,65,0]) #cube([12,10,10]);
 
 
 
